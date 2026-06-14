@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Trainer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #0f0f1a;
+            --surface: rgba(255, 255, 255, 0.04);
+            --surface-hover: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #a855f7;
+            --accent-glow: rgba(168, 85, 247, 0.25);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.12);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-full: 9999px;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(88, 28, 135, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            padding: 24px 16px;
+            min-height: 100vh;
+            line-height: 1.6;
+            animation: bgPulse 20s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow:
+                0 4px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            position: relative;
+            overflow: hidden;
+            animation: containerIn 0.6s ease-out;
+        }
+
+        @keyframes containerIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--success), var(--accent));
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-primary);
+            margin-bottom: 28px;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            position: relative;
+        }
+
+        h1::after {
+            content: "";
+            display: block;
+            width: 64px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin: 12px auto 0;
+            border-radius: 2px;
+        }
+
+        .intro-section {
+            text-align: center;
+            padding: 28px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 24px;
+            transition: border-color 0.3s ease;
+        }
+
+        .intro-section p {
+            margin: 10px 0;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .intro-section p:first-child {
+            color: var(--text-primary);
+            font-size: 1.15rem;
+            font-weight: 500;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            color: #0a0a0f;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1.15rem;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.25);
+            margin: 24px auto;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            display: block;
+            width: 80%;
+            max-width: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(168, 85, 247, 0.35);
+        }
+
+        .start-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 12px rgba(168, 85, 247, 0.2);
+        }
+
+        .question-section {
+            display: none;
+            text-align: center;
+            padding: 28px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin: 24px 0;
+            animation: fadeIn 0.35s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .note-display {
+            text-align: center;
+            margin: 16px 0 24px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: transparent;
+            border-radius: var(--radius);
+            position: relative;
+        }
+
+        .replay-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            border-radius: var(--radius-full);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            position: relative;
+            backdrop-filter: blur(8px);
+        }
+
+        .replay-btn .icon {
+            font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .replay-btn .label {
+            transition: all 0.3s ease;
+        }
+
+        .replay-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .replay-btn:active {
+            transform: scale(0.97);
+        }
+
+        .replay-btn.playing {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(168, 85, 247, 0.06);
+            animation: glowPulse 1.2s ease infinite;
+        }
+
+        .replay-btn.playing .icon {
+            animation: iconBounce 0.6s ease infinite alternate;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.15); }
+            50% { box-shadow: 0 0 20px 4px rgba(168, 85, 247, 0.08); }
+        }
+
+        @keyframes iconBounce {
+            from { transform: scale(1); }
+            to { transform: scale(1.15); }
+        }
+
+        .sa-ref-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+            opacity: 0.6;
+        }
+
+        .sa-ref-btn:hover {
+            color: var(--accent);
+            background: rgba(168, 85, 247, 0.08);
+            opacity: 1;
+        }
+
+        .sa-ref-btn:active {
+            transform: scale(0.95);
+        }
+
+        .sa-ref-btn .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: inline-block;
+            opacity: 0.5;
+        }
+
+        .sa-ref-btn.playing {
+            color: var(--accent);
+            opacity: 1;
+        }
+
+        .sa-ref-btn.playing .dot {
+            animation: dotGlow 0.8s ease infinite alternate;
+        }
+
+        @keyframes dotGlow {
+            from { opacity: 0.3; box-shadow: 0 0 0 0 var(--accent-glow); }
+            to { opacity: 1; box-shadow: 0 0 8px 2px var(--accent-glow); }
+        }
+
+        .question-section p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 24px 0;
+        }
+
+        .option-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 18px 16px;
+            font-size: 1.2rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-family: inherit;
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-btn::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.03) 50%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .option-btn.correct {
+            background: var(--success-bg);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: var(--success);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+            animation: pulse 0.4s ease;
+        }
+
+        .option-btn.incorrect {
+            background: var(--error-bg);
+            border-color: rgba(239, 68, 68, 0.35);
+            color: var(--error);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        .feedback {
+            font-size: 1.1rem;
+            margin: 20px 0 16px;
+            min-height: 48px;
+            font-weight: 600;
+            padding: 14px 20px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .feedback.correct {
+            background: var(--success-bg);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .feedback.incorrect {
+            background: var(--error-bg);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .continue-btn {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            color: #0a0a0f;
+            border: none;
+            padding: 14px 36px;
+            font-size: 1rem;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 8px auto 0;
+            display: none;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 16px rgba(168, 85, 247, 0.2);
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .continue-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(168, 85, 247, 0.3);
+        }
+
+        .continue-btn:active {
+            transform: translateY(0);
+        }
+
+        .history-section {
+            margin-top: 28px;
+            padding: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        .history-title {
+            text-align: center;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .history-title::after {
+            content: "";
+            display: block;
+            width: 48px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin: 10px auto 0;
+            border-radius: 1px;
+        }
+
+        .history-list {
+            list-style-type: none;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.25s ease;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateX(4px);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .history-note {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .history-status {
+            font-size: 1.5rem;
+            min-width: 36px;
+            text-align: center;
+        }
+
+        .correct-icon {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .incorrect-icon {
+            color: var(--error);
+            font-weight: bold;
+        }
+
+        .audio-player {
+            display: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px 8px;
+            }
+
+            .container {
+                padding: 20px 16px;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 1.7rem;
+            }
+
+            .note-display {
+                font-size: 3.5rem;
+                min-height: 80px;
+            }
+
+            .options-container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .option-btn {
+                padding: 16px;
+                font-size: 1.1rem;
+                min-height: 56px;
+            }
+
+            .start-btn {
+                width: 100%;
+                max-width: 100%;
+                padding: 14px 32px;
+                font-size: 1.05rem;
+            }
+
+            .intro-section {
+                padding: 20px 16px;
+            }
+
+            .question-section {
+                padding: 20px 16px;
+            }
+
+            .history-section {
+                padding: 20px 16px;
+            }
+
+            .feedback {
+                font-size: 1rem;
+                padding: 12px 16px;
+            }
+        }
+
+        @media (min-width: 601px) and (max-width: 1024px) {
+            .container {
+                padding: 28px 24px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1> Note Trainer </h1>
+        
+        <div class="intro-section">
+            <p>Hi!</p>
+            <p>Click the start button to begin your training session.</p>
+        </div>
+        
+        <div id="startSection">
+            <button class="start-btn" id="startButton">Start Training Session</button>
+        </div>
+        
+        <div id="questionSection" class="question-section">
+            <div class="note-display" id="noteDisplay">?</div>
+            <p>What note is this?</p>
+            
+            <div class="options-container" id="optionsContainer">
+                <!-- Options will be inserted here by JavaScript -->
+            </div>
+            
+            <div class="feedback" id="feedback"></div>
+            <button class="continue-btn" id="continueButton">Continue</button>
+        </div>
+        
+        <div class="history-section">
+            <h2 class="history-title">Session History</h2>
+            <ul class="history-list" id="historyList">
+                <!-- History items will be inserted here by JavaScript -->
+            </ul>
+        </div>
+    </div>
+    
+    <audio id="audioPlayer" class="audio-player"></audio>
+
+    <script>
+        // Note data with Hindustani names and corresponding audio files
+        const notes = [
+            { name: "Sa", audioFile: "sa.mp3" },
+            { name: "Re Komal", audioFile: "re_komal.mp3" },
+            { name: "Re", audioFile: "re.mp3" },
+            { name: "Ga Komal", audioFile: "ga_komal.mp3" },
+            { name: "Ga", audioFile: "ga.mp3" },
+            { name: "Ma", audioFile: "ma.mp3" },
+            { name: "Ma Tivra", audioFile: "ma_tivra.mp3" },
+            { name: "Pa", audioFile: "pa.mp3" },
+            { name: "Dha Komal", audioFile: "dha_komal.mp3" },
+            { name: "Dha", audioFile: "dha.mp3" },
+            { name: "Ni Komal", audioFile: "ni_komal.mp3" },
+            { name: "Ni", audioFile: "ni.mp3" }
+        ];
+
+        // Game state
+        let gameState = {
+            currentNote: null,
+            history: [],
+            sessionStarted: false,
+            audioLoaded: false
+        };
+
+        // DOM elements
+        const startButton = document.getElementById('startButton');
+        const questionSection = document.getElementById('questionSection');
+        const noteDisplay = document.getElementById('noteDisplay');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const feedback = document.getElementById('feedback');
+        const continueButton = document.getElementById('continueButton');
+        const historyList = document.getElementById('historyList');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        // Initialize the app
+        function init() {
+            startButton.addEventListener('click', startSession);
+            continueButton.addEventListener('click', nextQuestion);
+            
+            // Preload audio files
+            preloadAudio();
+        }
+
+        // Preload audio files
+        function preloadAudio() {
+            notes.forEach(note => {
+                const audio = new Audio();
+                audio.src = note.audioFile;
+                audio.preload = 'auto';
+            });
+            gameState.audioLoaded = true;
+        }
+
+        // Start a new training session
+        function startSession() {
+            gameState.sessionStarted = true;
+            startButton.style.display = 'none';
+            document.querySelector('.intro-section').style.display = 'none';
+            nextQuestion();
+        }
+
+        // Generate a random note and show the question
+        function nextQuestion() {
+            questionSection.style.display = 'block';
+            feedback.className = 'feedback';
+            feedback.textContent = '';
+            continueButton.style.display = 'none';
+            
+            const randomIndex = Math.floor(Math.random() * notes.length);
+            gameState.currentNote = notes[randomIndex];
+            
+            // Build replay button UI
+            noteDisplay.innerHTML = '\
+                <button class="replay-btn" id="replayBtn"><span class="icon">&#9654;</span><span class="label">replay note</span></button>\
+                <button class="sa-ref-btn" id="saRefBtn"><span class="dot"></span> Sa</button>\
+            ';
+            const replayBtn = document.getElementById('replayBtn');
+            replayBtn.addEventListener('click', () => playAudio(gameState.currentNote.audioFile, replayBtn));
+            
+            const saRefBtn = document.getElementById('saRefBtn');
+            saRefBtn.addEventListener('click', () => playAudio('sa.mp3', saRefBtn, true));
+            
+            playAudio(gameState.currentNote.audioFile, replayBtn);
+            generateOptions();
+        }
+
+        function playAudio(audioFile, btnEl) {
+            if (!gameState.audioLoaded) {
+                feedback.textContent = "Loading audio...";
+                return;
+            }
+            
+            try {
+                if (btnEl) btnEl.classList.add('playing');
+                audioPlayer.src = audioFile;
+                audioPlayer.load();
+                const playPromise = audioPlayer.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        setTimeout(() => {
+                            if (btnEl) btnEl.classList.remove('playing');
+                        }, 1500);
+                    }).catch(error => {
+                        console.error("Audio playback failed:", error);
+                        if (btnEl) btnEl.classList.remove('playing');
+                    });
+                } else {
+                    setTimeout(() => {
+                        if (btnEl) btnEl.classList.remove('playing');
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error("Error playing audio:", error);
+                if (btnEl) btnEl.classList.remove('playing');
+            }
+        }
+
+        // Generate multiple choice options
+        function generateOptions() {
+            optionsContainer.innerHTML = '';
+            
+            // Get the correct answer
+            const correctAnswer = gameState.currentNote.name;
+            
+            // Create array of all notes
+            const allNotes = [...notes];
+            
+            // Remove the correct note from the pool
+            const availableNotes = allNotes.filter(note => note.name !== correctAnswer);
+            
+            // Select 3 random incorrect options
+            const incorrectOptions = [];
+            while (incorrectOptions.length < 3 && availableNotes.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableNotes.length);
+                incorrectOptions.push(availableNotes.splice(randomIndex, 1)[0].name);
+            }
+            
+            // Combine correct and incorrect options
+            const allOptions = [correctAnswer, ...incorrectOptions];
+            
+            // Shuffle the options
+            shuffleArray(allOptions);
+            
+            // Create buttons for each option
+            allOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.addEventListener('click', () => checkAnswer(option));
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // Check if the selected answer is correct
+        function checkAnswer(selectedOption) {
+            const buttons = optionsContainer.querySelectorAll('.option-btn');
+            
+            // Disable all buttons
+            buttons.forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            // Check if correct
+            if (selectedOption === gameState.currentNote.name) {
+                feedback.textContent = "Correct! Well done!";
+                feedback.className = 'feedback correct';
+                
+                // Add to history with checkmark
+                addToHistory(gameState.currentNote.name, true);
+            } else {
+                feedback.textContent = "Try again! That's not the right note.";
+                feedback.className = 'feedback incorrect';
+                
+                // Add to history with X mark
+                addToHistory(gameState.currentNote.name, false);
+            }
+            
+            // Show continue button
+            continueButton.style.display = 'block';
+        }
+
+        // Add item to session history
+        function addToHistory(noteName, isCorrect) {
+            gameState.history.unshift({
+                note: noteName,
+                correct: isCorrect
+            });
+            
+            if (gameState.history.length > 50) {
+                gameState.history = gameState.history.slice(0, 50);
+            }
+            
+            updateHistoryDisplay();
+        }
+
+        // Update the history display
+        function updateHistoryDisplay() {
+            historyList.innerHTML = '';
+            
+            gameState.history.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                
+                const noteSpan = document.createElement('span');
+                noteSpan.className = 'history-note';
+                noteSpan.textContent = item.note;
+                
+                const statusSpan = document.createElement('span');
+                statusSpan.className = 'history-status';
+                statusSpan.innerHTML = item.correct ? 
+                    '<span class="correct-icon">✓</span>' : 
+                    '<span class="incorrect-icon">✗</span>';
+                
+                li.appendChild(noteSpan);
+                li.appendChild(statusSpan);
+                historyList.appendChild(li);
+            });
+        }
+
+        // Shuffle array using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Initialize the app when page loads
+        window.onload = init;
+    </script>
+</body>
+</html>
+
+
+
