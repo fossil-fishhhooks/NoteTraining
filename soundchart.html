@@ -289,50 +289,14 @@
             height: 64px;
         }
 
-        .scroll-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 2px 0 8px;
+        .time-row {
+            text-align: center;
+            margin: 4px 0 8px;
         }
 
-        .scroll-row input[type="range"] {
-            flex: 1;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 4px;
-            border-radius: 2px;
-            background: var(--border);
-            outline: none;
-            cursor: pointer;
-        }
-
-        .scroll-row input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            border: 2px solid var(--bg-primary);
-        }
-
-        .scroll-row input[type="range"]::-moz-range-thumb {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            border: 2px solid var(--bg-primary);
-        }
-
-        .scroll-row .time-label {
+        .time-row .time-label {
             font-size: 0.72rem;
             color: var(--text-muted);
-            white-space: nowrap;
-            min-width: 36px;
-            text-align: center;
         }
 
         .controls {
@@ -456,10 +420,8 @@
             <canvas id="minimapCanvas"></canvas>
         </div>
 
-        <div class="scroll-row">
+        <div class="time-row">
             <span class="time-label" id="timeLabel">0s</span>
-            <input type="range" id="scrollBar" min="0" max="0" value="0">
-            <span class="time-label" id="timeTotal">0s</span>
         </div>
 
         <div class="controls">
@@ -496,9 +458,7 @@
         var noteName = document.getElementById('noteName');
         var freqDisplay = document.getElementById('freqDisplay');
         var chartCanvas = document.getElementById('chartCanvas');
-        var scrollBar = document.getElementById('scrollBar');
         var timeLabel = document.getElementById('timeLabel');
-        var timeTotal = document.getElementById('timeTotal');
         var saRefBtn = document.getElementById('saRefBtn');
         var tanpuraBtn = document.getElementById('tanpuraBtn');
 
@@ -540,7 +500,7 @@
         var freqHistory = [];
         var noteHistory = [];
         var MAX_HISTORY = 6000;
-        var VISIBLE_SECONDS = 8;
+        var visibleSecs = 8;
         var yOctaves = 3;
         var yCenterMidi = 64;
         var _dispFMin = 110;
@@ -553,7 +513,11 @@
             _dispFMax = cf * Math.pow(2, half);
         }
         var atLiveEdge = true;
-        var isDraggingMinimap = false;
+        var scrollPos = 0;
+        var minimapDragMode = null;
+        var dragStartX = 0;
+        var dragStartVpStart = 0;
+        var dragStartVpEnd = 0;
         var isDraggingChart = false;
         var dragStartY = 0;
         var dragStartMidi = 0;
@@ -730,15 +694,23 @@
 
             var bands = getNoteBands();
 
-            for (var b = 1; b < bands.length; b++) {
-                var yTop = freqToY(bands[b].freq, h);
-                var yBottom = freqToY(bands[b - 1].freq, h);
-                ctx.fillStyle = (b - 1) % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.07)';
-                ctx.fillRect(0, yTop, w, yBottom - yTop);
+            // Compute band boundaries centered on each note
+            var bandBot = [bands[0].freq];
+            for (var b = 0; b < bands.length - 1; b++) {
+                bandBot.push(Math.sqrt(bands[b].freq * bands[b + 1].freq));
+            }
+            bandBot.push(bands[bands.length - 1].freq);
+
+            for (var b = 0; b < bands.length; b++) {
+                var yTop = freqToY(bandBot[b + 1], h);
+                var yBot = freqToY(bandBot[b], h);
+                ctx.fillStyle = b % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.07)';
+                ctx.fillRect(0, yTop, w, yBot - yTop);
             }
 
             for (var b = 0; b < bands.length; b++) {
-                var y = freqToY(bands[b].freq, h);
+                var yLine = freqToY(bands[b].freq, h);
+                var yLabel = (freqToY(bandBot[b], h) + freqToY(bandBot[b + 1], h)) / 2;
                 var isSa = bands[b].indian === 'Sa';
                 var isMain = isSa || bands[b].indian === 'Re' || bands[b].indian === 'Ga' ||
                              bands[b].indian === 'Ma' || bands[b].indian === 'Pa' ||
@@ -747,8 +719,8 @@
                 ctx.strokeStyle = isSa ? 'rgba(168, 85, 247, 0.35)' : 'rgba(255,255,255,0.06)';
                 ctx.lineWidth = isSa ? 1 : 0.5;
                 ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(w, y);
+                ctx.moveTo(0, yLine);
+                ctx.lineTo(w, yLine);
                 ctx.stroke();
 
                 var label = bands[b].name + bands[b].octave;
@@ -768,24 +740,18 @@
                 }
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(label, 6, y - 2);
+                ctx.fillText(label, 6, yLabel);
             }
 
             var totalPts = freqHistory.length;
-            var visiblePts = VISIBLE_SECONDS * 60;
-
-            var scrollMax = parseInt(scrollBar.max) || 0;
-            var scrollVal = parseInt(scrollBar.value) || 0;
+            var visiblePts = Math.round(visibleSecs * 60);
 
             var startIdx = 0;
-            if (totalPts > 0) {
-                if (scrollMax > 0) {
-                    var ratio = scrollVal / scrollMax;
-                    startIdx = Math.round(ratio * (totalPts - visiblePts));
-                    if (startIdx < 0) startIdx = 0;
-                    if (startIdx > totalPts - visiblePts) startIdx = totalPts - visiblePts;
+            if (totalPts > visiblePts) {
+                if (atLiveEdge) {
+                    startIdx = totalPts - visiblePts;
                 } else {
-                    startIdx = Math.max(0, totalPts - visiblePts);
+                    startIdx = Math.min(scrollPos, totalPts - visiblePts);
                 }
             }
 
@@ -840,36 +806,16 @@
             }
 
             if (totalPts > 0) {
-                var currentPos = startIdx;
                 var totalSec = Math.round(totalPts / 60);
-                var currentSec = Math.round(currentPos / 60);
-                timeLabel.textContent = '-' + (totalSec - currentSec) + 's';
-                timeTotal.textContent = totalSec + 's';
+                timeLabel.textContent = totalSec + 's';
             } else {
                 timeLabel.textContent = '0s';
-                timeTotal.textContent = '0s';
             }
 
             drawMinimap();
         }
 
-        function updateScrollbar() {
-            var totalPts = freqHistory.length;
-            var visiblePts = VISIBLE_SECONDS * 60;
 
-            if (totalPts <= visiblePts) {
-                scrollBar.max = 0;
-                scrollBar.value = 0;
-                return;
-            }
-
-            var maxVal = totalPts - visiblePts;
-            scrollBar.max = maxVal;
-
-            if (atLiveEdge) {
-                scrollBar.value = maxVal;
-            }
-        }
 
         function drawMinimap() {
             var dpr = window.devicePixelRatio || 1;
@@ -903,31 +849,20 @@
             minimapCtx.lineWidth = 1;
             minimapCtx.stroke();
 
-            var visiblePts = VISIBLE_SECONDS * 60;
-            var scrollMax = parseInt(scrollBar.max) || 0;
-            var scrollVal = parseInt(scrollBar.value) || 0;
+            var vp = getVpBounds(total);
 
-            var startFrac = 0;
-            if (total > visiblePts) {
-                if (scrollMax > 0) {
-                    startFrac = scrollVal / scrollMax;
-                } else {
-                    startFrac = 1 - visiblePts / total;
-                }
-            }
-
-            var vpStart = startFrac * total;
-            var vpEnd = vpStart + visiblePts;
-            if (vpEnd > total) vpEnd = total;
-
-            var vpLeft = (vpStart / total) * mw;
-            var vpRight = (vpEnd / total) * mw;
+            var vpLeft = (vp.start / total) * mw;
+            var vpRight = (vp.end / total) * mw;
 
             minimapCtx.fillStyle = 'rgba(168, 85, 247, 0.15)';
             minimapCtx.fillRect(vpLeft, 0, vpRight - vpLeft, mh);
-            minimapCtx.strokeStyle = 'rgba(168, 85, 247, 0.5)';
-            minimapCtx.lineWidth = 1;
+            minimapCtx.strokeStyle = 'rgba(168, 85, 247, 0.6)';
+            minimapCtx.lineWidth = 1.5;
             minimapCtx.strokeRect(vpLeft, 0, vpRight - vpLeft, mh);
+
+            minimapCtx.fillStyle = 'rgba(192, 132, 252, 0.7)';
+            minimapCtx.fillRect(vpLeft, 0, 3, mh);
+            minimapCtx.fillRect(vpRight - 3, 0, 3, mh);
         }
 
         function startMic() {
@@ -986,16 +921,15 @@
             micActive = false;
             freqHistory = [];
             noteHistory = [];
+            scrollPos = 0;
+            atLiveEdge = true;
 
             micBtn.classList.remove('listening');
             micLabel.textContent = 'Start Microphone';
             noteName.textContent = '\u2014';
             noteName.className = 'note-name muted';
             freqDisplay.textContent = '';
-            scrollBar.max = 0;
-            scrollBar.value = 0;
             timeLabel.textContent = '0s';
-            timeTotal.textContent = '0s';
             ctx.clearRect(0, 0, canvasW, canvasH);
             minimapCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
             statusText.textContent = 'Press Start to begin';
@@ -1034,10 +968,14 @@
                 }
 
                 if (freqHistory.length > MAX_HISTORY) {
-                    freqHistory.splice(0, freqHistory.length - MAX_HISTORY);
-                    noteHistory.splice(0, noteHistory.length - MAX_HISTORY);
+                    var removed = freqHistory.length - MAX_HISTORY;
+                    freqHistory.splice(0, removed);
+                    noteHistory.splice(0, removed);
+                    scrollPos = Math.max(0, scrollPos - removed);
                 }
-                updateScrollbar();
+                if (atLiveEdge) {
+                    scrollPos = Math.max(0, Math.round(freqHistory.length - visibleSecs * 60));
+                }
                 drawChart();
 
                 animFrameId = requestAnimationFrame(tick);
@@ -1063,42 +1001,90 @@
 
 
 
-        scrollBar.addEventListener('input', function() {
-            var val = parseInt(scrollBar.value);
-            var max = parseInt(scrollBar.max);
-            atLiveEdge = (val >= max);
-            drawChart();
-        });
+
 
         var minimapWrap = document.getElementById('minimapWrap');
+        var MIN_VISIBLE_SECS = 2;
+        var MAX_VISIBLE_SECS = 60;
 
-        function minimapPosFromEvent(clientX) {
+        function minimapPos(px) {
             var rect = minimapWrap.getBoundingClientRect();
-            return (clientX - rect.left) / rect.width;
+            return (px - rect.left) / rect.width;
         }
 
-        function applyMinimapScroll(ratio) {
-            var total = freqHistory.length;
-            var visiblePts = VISIBLE_SECONDS * 60;
-            if (total <= visiblePts) return;
-            var maxScroll = total - visiblePts;
-            var newScroll = Math.round(ratio * maxScroll);
-            if (newScroll < 0) newScroll = 0;
-            if (newScroll > maxScroll) newScroll = maxScroll;
-            scrollBar.max = maxScroll;
-            scrollBar.value = newScroll;
-            atLiveEdge = (newScroll >= maxScroll);
-            drawChart();
+        function minimapXFromRatio(r) {
+            var rect = minimapWrap.getBoundingClientRect();
+            return r * rect.width;
+        }
+
+        function getVpBounds(total) {
+            var secs = Math.min(visibleSecs, total / 60);
+            var visiblePts = Math.round(secs * 60);
+            if (total <= visiblePts) return { start: 0, end: total, secs: secs };
+            var s = atLiveEdge ? total - visiblePts : Math.min(scrollPos, total - visiblePts);
+            return { start: s, end: s + visiblePts, secs: secs };
+        }
+
+        function commitScroll(newStart, newSecs, total) {
+            newSecs = Math.max(MIN_VISIBLE_SECS, Math.min(MAX_VISIBLE_SECS, newSecs));
+            var newVisible = Math.round(newSecs * 60);
+            if (total <= newVisible) { newStart = 0; newSecs = total / 60; newVisible = total; }
+            newStart = Math.max(0, Math.min(Math.round(newStart), total - newVisible));
+            scrollPos = newStart;
+            visibleSecs = newSecs;
+            atLiveEdge = (newStart >= total - newVisible);
         }
 
         minimapWrap.addEventListener('mousedown', function(e) {
-            isDraggingMinimap = true;
-            applyMinimapScroll(minimapPosFromEvent(e.clientX));
+            var total = freqHistory.length;
+            if (total < 2) return;
+            var vp = getVpBounds(total);
+            var mw = minimapWrap.getBoundingClientRect().width;
+            var r = minimapPos(e.clientX);
+            var px = r * mw;
+            var vpL = (vp.start / total) * mw;
+            var vpR = (vp.end / total) * mw;
+            var edge = 10;
+            if (Math.abs(px - vpL) < edge) minimapDragMode = 'left';
+            else if (Math.abs(px - vpR) < edge) minimapDragMode = 'right';
+            else minimapDragMode = 'move';
+            dragStartX = e.clientX;
+            dragStartVpStart = vp.start;
+            dragStartVpEnd = vp.end;
+            if (minimapDragMode === 'move') {
+                var half = vp.secs * 30;
+                var nr = Math.max(0, Math.min(total - visibleSecs * 60, r * total - half));
+                commitScroll(nr, visibleSecs, total);
+                dragStartVpStart = scrollPos;
+                dragStartVpEnd = scrollPos + visibleSecs * 60;
+                drawChart();
+            }
         });
 
         window.addEventListener('mousemove', function(e) {
-            if (isDraggingMinimap) {
-                applyMinimapScroll(minimapPosFromEvent(e.clientX));
+            if (minimapDragMode) {
+                var total = freqHistory.length;
+                if (total < 2) return;
+                var dxPx = e.clientX - dragStartX;
+                var mw = minimapWrap.getBoundingClientRect().width;
+                var totalPx = mw;
+                var r = totalPx > 0 ? dxPx / totalPx : 0;
+                if (minimapDragMode === 'left') {
+                    var newStart = Math.max(0, dragStartVpStart + r * total);
+                    var newSecs = (dragStartVpEnd - newStart) / 60;
+                    commitScroll(newStart, newSecs, total);
+                    drawChart();
+                } else if (minimapDragMode === 'right') {
+                    var newEnd = Math.min(total, dragStartVpEnd + r * total);
+                    var newSecs = (newEnd - dragStartVpStart) / 60;
+                    commitScroll(dragStartVpStart, newSecs, total);
+                    drawChart();
+                } else if (minimapDragMode === 'move') {
+                    var delta = r * total;
+                    var newStart = dragStartVpStart + delta;
+                    commitScroll(newStart, visibleSecs, total);
+                    drawChart();
+                }
             }
             if (isDraggingChart) {
                 var dy = e.clientY - dragStartY;
@@ -1110,7 +1096,7 @@
         });
 
         window.addEventListener('mouseup', function() {
-            isDraggingMinimap = false;
+            minimapDragMode = null;
             if (isDraggingChart) {
                 isDraggingChart = false;
                 chartCanvas.style.cursor = '';
@@ -1118,19 +1104,62 @@
         });
 
         minimapWrap.addEventListener('touchstart', function(e) {
-            isDraggingMinimap = true;
-            applyMinimapScroll(minimapPosFromEvent(e.touches[0].clientX));
+            var total = freqHistory.length;
+            if (total < 2) return;
+            var t = e.touches[0];
+            var vp = getVpBounds(total);
+            var mw = minimapWrap.getBoundingClientRect().width;
+            var r = minimapPos(t.clientX);
+            var px = r * mw;
+            var vpL = (vp.start / total) * mw;
+            var vpR = (vp.end / total) * mw;
+            var edge = 16;
+            if (Math.abs(px - vpL) < edge) minimapDragMode = 'left';
+            else if (Math.abs(px - vpR) < edge) minimapDragMode = 'right';
+            else minimapDragMode = 'move';
+            dragStartX = t.clientX;
+            dragStartVpStart = vp.start;
+            dragStartVpEnd = vp.end;
+            if (minimapDragMode === 'move') {
+                var half = vp.secs * 30;
+                var nr = Math.max(0, Math.min(total - visibleSecs * 60, r * total - half));
+                commitScroll(nr, visibleSecs, total);
+                dragStartVpStart = scrollPos;
+                dragStartVpEnd = scrollPos + visibleSecs * 60;
+                drawChart();
+            }
         });
 
         minimapWrap.addEventListener('touchmove', function(e) {
-            if (isDraggingMinimap) {
-                applyMinimapScroll(minimapPosFromEvent(e.touches[0].clientX));
+            if (minimapDragMode) {
+                var total = freqHistory.length;
+                if (total < 2) return;
+                var t = e.touches[0];
+                var dxPx = t.clientX - dragStartX;
+                var mw = minimapWrap.getBoundingClientRect().width;
+                var r = mw > 0 ? dxPx / mw : 0;
+                if (minimapDragMode === 'left') {
+                    var newStart = Math.max(0, dragStartVpStart + r * total);
+                    var newSecs = (dragStartVpEnd - newStart) / 60;
+                    commitScroll(newStart, newSecs, total);
+                    drawChart();
+                } else if (minimapDragMode === 'right') {
+                    var newEnd = Math.min(total, dragStartVpEnd + r * total);
+                    var newSecs = (newEnd - dragStartVpStart) / 60;
+                    commitScroll(dragStartVpStart, newSecs, total);
+                    drawChart();
+                } else if (minimapDragMode === 'move') {
+                    var delta = r * total;
+                    var newStart = dragStartVpStart + delta;
+                    commitScroll(newStart, visibleSecs, total);
+                    drawChart();
+                }
                 e.preventDefault();
             }
         });
 
         minimapWrap.addEventListener('touchend', function() {
-            isDraggingMinimap = false;
+            minimapDragMode = null;
         });
 
         chartCanvas.addEventListener('mousedown', function(e) {
