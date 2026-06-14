@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Tuner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #0f0f1a;
+            --surface: rgba(255, 255, 255, 0.04);
+            --surface-hover: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #a855f7;
+            --accent-dim: rgba(168, 85, 247, 0.15);
+            --accent-glow: rgba(168, 85, 247, 0.25);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.12);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.12);
+            --warning: #eab308;
+            --warning-bg: rgba(234, 179, 8, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-full: 9999px;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(88, 28, 135, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            padding: 24px 16px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            line-height: 1.6;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button, label, input[type="range"] {
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow:
+                0 4px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), #7c3aed, var(--accent), transparent);
+            opacity: 0.7;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .header-row h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .header-row h1::after {
+            content: "";
+            display: block;
+            width: 48px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin: 8px 0 0;
+            border-radius: 2px;
+        }
+
+        .back-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s ease, opacity 0.2s ease;
+            opacity: 0.6;
+            flex-shrink: 0;
+        }
+
+        .back-link:hover {
+            color: var(--accent) !important;
+            opacity: 1;
+        }
+
+        .settings-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .settings-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .settings-btn.open {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .settings-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+
+        .settings-panel.open {
+            max-height: 500px;
+            opacity: 1;
+            margin-bottom: 24px;
+        }
+
+        .settings-inner {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .settings-inner > * + * {
+            margin-top: 20px;
+        }
+
+        .panel-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .difficulty-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .difficulty-row input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .difficulty-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .difficulty-row input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .diff-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .mic-section {
+            text-align: center;
+            padding: 12px 0 20px;
+        }
+
+        .mic-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 14px 32px;
+            font-size: 1rem;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 48px;
+        }
+
+        .mic-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .mic-btn.listening {
+            background: var(--success-bg);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+
+        .mic-btn .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .mic-btn.listening .dot {
+            animation: dotBlink 1s ease infinite;
+        }
+
+        .mic-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @keyframes dotBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .mic-error {
+            color: var(--error);
+            font-size: 0.85rem;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+
+        .tuner-display {
+            text-align: center;
+            padding: 20px 0 16px;
+        }
+
+        .note-name {
+            font-size: 4.5rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            min-height: 5rem;
+            transition: color 0.15s ease;
+        }
+
+        .note-name.detected {
+            color: var(--accent);
+        }
+
+        .note-name.in-tune {
+            color: var(--success);
+        }
+
+        .note-name.muted {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 2rem;
+        }
+
+        .freq-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 6px;
+            min-height: 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .freq-row .sep {
+            opacity: 0.3;
+        }
+
+        .rms-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            justify-content: center;
+        }
+
+        .rms-bar-track {
+            width: 120px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .rms-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.05s linear;
+        }
+
+        .rms-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .cent-meter-wrap {
+            margin: 16px 0 12px;
+            padding: 16px 0;
+        }
+
+        .cent-track {
+            position: relative;
+            height: 6px;
+            background: linear-gradient(90deg,
+                var(--error) 0%,
+                var(--warning) 20%,
+                var(--warning-bg) 35%,
+                var(--success) 45%,
+                var(--success) 55%,
+                var(--warning-bg) 65%,
+                var(--warning) 80%,
+                var(--error) 100%
+            );
+            border-radius: 3px;
+            opacity: 0.3;
+            transition: opacity 0.3s ease;
+        }
+
+        .cent-track.active {
+            opacity: 0.7;
+        }
+
+        .cent-needle {
+            position: absolute;
+            top: 50%;
+            width: 4px;
+            height: 26px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transform: translate(-50%, -50%);
+            transition: left 0.06s linear, background 0.15s ease, box-shadow 0.15s ease;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+        }
+
+        .cent-needle.in-tune {
+            background: var(--success);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .cent-needle.near {
+            background: var(--warning);
+            box-shadow: 0 0 8px rgba(234, 179, 8, 0.3);
+        }
+
+        .cent-needle.far {
+            background: var(--error);
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .cent-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .cent-value {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 6px;
+            min-height: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .cent-value.in-tune { color: var(--success); }
+        .cent-value.near { color: var(--warning); }
+        .cent-value.far { color: var(--error); }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .ref-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 44px;
+        }
+
+        .ref-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .ref-btn:active {
+            transform: scale(0.97);
+        }
+
+        .ref-btn.playing {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .ref-btn .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+        }
+
+        .ref-btn.tanpura-off .dot {
+            background: var(--text-muted);
+        }
+
+        .status-text {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 16px;
+            min-height: 1.2rem;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .settings-row label {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .settings-row input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .settings-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 6px var(--accent-glow);
+        }
+
+        .settings-row input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .settings-row .hz-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 48px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 12px 8px; }
+            .container { padding: 20px 16px; border-radius: 20px; }
+            .header-row h1 { font-size: 1.7rem; }
+            .note-name { font-size: 3.5rem; min-height: 3.8rem; }
+            .note-name.muted { font-size: 1.6rem; }
+            .controls { gap: 8px; }
+            .ref-btn { padding: 8px 16px; font-size: 0.82rem; }
+        }
+
+        @media (max-width: 400px) {
+            .container { padding: 16px 12px; border-radius: 16px; }
+            .note-name { font-size: 2.8rem; min-height: 3rem; }
+            .header-row h1 { font-size: 1.4rem; }
+            .mic-btn { padding: 12px 24px; font-size: 0.9rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                <a href="index.html" class="back-link">&larr; Hub</a>
+                <h1>Tuner</h1>
+            </div>
+            <button class="settings-btn" id="settingsToggle" title="Settings">&#9881;</button>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-inner">
+                <div>
+                    <div class="panel-label">Sensitivity</div>
+                    <div class="difficulty-row">
+                        <input type="range" id="sensSlider" min="1" max="10" value="5">
+                        <span class="diff-value" id="sensValue">5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mic-section">
+            <button class="mic-btn" id="micBtn">
+                <span class="dot"></span>
+                <span id="micLabel">Start Microphone</span>
+            </button>
+            <div class="mic-error" id="micError"></div>
+        </div>
+
+        <div class="tuner-display">
+            <div class="note-name muted" id="noteName">&mdash;</div>
+            <div class="freq-row">
+                <span id="freqDisplay"></span>
+                <span class="sep" id="freqSep" style="display:none">|</span>
+                <span id="westernDisplay"></span>
+            </div>
+            <div class="rms-bar-wrap">
+                <span class="rms-label">signal</span>
+                <div class="rms-bar-track">
+                    <div class="rms-bar-fill" id="rmsFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cent-meter-wrap">
+            <div class="cent-track" id="centTrack">
+                <div class="cent-needle" id="centNeedle" style="left: 50%;"></div>
+            </div>
+            <div class="cent-labels">
+                <span>-50 &cent;</span>
+                <span>0</span>
+                <span>+50 &cent;</span>
+            </div>
+            <div class="cent-value" id="centValue"></div>
+        </div>
+
+        <div class="controls">
+            <button class="ref-btn" id="saRefBtn"><span class="dot"></span> Sa</button>
+            <button class="ref-btn tanpura-off" id="tanpuraBtn"><span class="dot"></span> Tanpura</button>
+        </div>
+
+        <div class="status-text" id="statusText">Press Start to begin tuning</div>
+    </div>
+
+    <audio id="audioPlayer" style="display:none"></audio>
+
+    <script>
+        const WESTERN_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        const INDIAN_MAP = {
+            'C': 'Sa', 'C#': 'Re Komal',
+            'D': 'Re', 'D#': 'Ga Komal',
+            'E': 'Ga', 'F': 'Ma',
+            'F#': 'Ma Tivra', 'G': 'Pa',
+            'G#': 'Dha Komal', 'A': 'Dha',
+            'A#': 'Ni Komal', 'B': 'Ni'
+        };
+
+        const micBtn = document.getElementById('micBtn');
+        const micLabel = document.getElementById('micLabel');
+        const micError = document.getElementById('micError');
+        const noteName = document.getElementById('noteName');
+        const freqDisplay = document.getElementById('freqDisplay');
+        const westernDisplay = document.getElementById('westernDisplay');
+        const freqSep = document.getElementById('freqSep');
+        const rmsFill = document.getElementById('rmsFill');
+        const centTrack = document.getElementById('centTrack');
+        const centNeedle = document.getElementById('centNeedle');
+        const centValue = document.getElementById('centValue');
+        const saRefBtn = document.getElementById('saRefBtn');
+        const tanpuraBtn = document.getElementById('tanpuraBtn');
+        const settingsToggle = document.getElementById('settingsToggle');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const sensSlider = document.getElementById('sensSlider');
+        const sensValue = document.getElementById('sensValue');
+        const statusText = document.getElementById('statusText');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        let audioContext = null;
+        let analyser = null;
+        let mediaStream = null;
+        let sourceNode = null;
+        let animFrameId = null;
+        let micActive = false;
+        let hasSignal = false;
+        let a4Ref = 440;
+        let smoothedCents = 0;
+        let micSensitivity = 5;
+        let tanpuraPlaying = false;
+        let tanpuraAudio = null;
+
+        const TANPURA_FILES = {
+            'Sa+Pa': 'tanpura_sa_pa.mp3',
+            'Sa+Ma Tivra': 'tanpura_sa_ma.mp3'
+        };
+
+        const DRONE_MAP = {
+            'Bilawal': 'Sa+Pa',
+            'Yaman': 'Sa+Ma Tivra',
+            'Kafi': 'Sa+Pa',
+            'Bhairav': 'Sa+Pa',
+            'Bhairavi': 'Sa+Pa'
+        };
+
+        function freqToNoteInfo(freq) {
+            if (freq <= 0) return null;
+            var semitones = 12 * Math.log2(freq / a4Ref) + 69;
+            var midi = Math.round(semitones);
+            var cents = (semitones - midi) * 100;
+            var octave = Math.floor(midi / 12) - 1;
+            var noteIndex = ((midi % 12) + 12) % 12;
+            return {
+                western: WESTERN_NOTES[noteIndex],
+                indian: INDIAN_MAP[WESTERN_NOTES[noteIndex]],
+                octave: octave,
+                cents: cents,
+                freq: freq,
+                midi: midi
+            };
+        }
+
+        function detectPitch(buffer, sampleRate) {
+            var SIZE = buffer.length;
+
+            var sumSq = 0;
+            for (var i = 0; i < SIZE; i++) sumSq += buffer[i] * buffer[i];
+            if (sumSq < 0.001) return -1;
+            var rms = Math.sqrt(sumSq / SIZE);
+
+            var rmsThreshold = 0.012 - (micSensitivity - 1) * 0.001;
+            if (rmsThreshold < 0.001) rmsThreshold = 0.001;
+            if (rms < rmsThreshold) return -1;
+
+            var minPeriod = Math.round(sampleRate / 1600);
+            var maxPeriod = Math.round(sampleRate / 55);
+
+            var d = new Float32Array(maxPeriod + 1);
+            for (var tau = 1; tau <= maxPeriod; tau++) {
+                var diff = 0;
+                var n = SIZE - tau;
+                for (var i = 0; i < n; i++) {
+                    var delta = buffer[i] - buffer[i + tau];
+                    diff += delta * delta;
+                }
+                d[tau] = diff / n;
+            }
+
+            var runningSum = 0;
+            var dNorm = new Float32Array(maxPeriod + 1);
+            for (var tau = 1; tau <= maxPeriod; tau++) {
+                runningSum += d[tau];
+                if (runningSum > 0) {
+                    dNorm[tau] = d[tau] * tau / runningSum;
+                } else {
+                    dNorm[tau] = 1;
+                }
+            }
+
+            var threshold = 0.06 + (micSensitivity - 1) * 0.02;
+            var bestTau = -1;
+            for (var tau = minPeriod; tau <= maxPeriod; tau++) {
+                if (dNorm[tau] < threshold) {
+                    bestTau = tau;
+                    break;
+                }
+            }
+
+            if (bestTau === -1) {
+                var minVal = Infinity;
+                for (var tau = minPeriod; tau <= maxPeriod; tau++) {
+                    if (dNorm[tau] < minVal) {
+                        minVal = dNorm[tau];
+                        bestTau = tau;
+                    }
+                }
+            }
+
+            if (bestTau <= 0) return -1;
+
+            if (bestTau > minPeriod && bestTau < maxPeriod) {
+                var x0 = bestTau - 1, y0 = dNorm[x0];
+                var x1 = bestTau, y1 = dNorm[x1];
+                var x2 = bestTau + 1, y2 = dNorm[x2];
+                var denom = x0 * (x1 - x2) + x1 * (x2 - x0) + x2 * (x0 - x1);
+                if (Math.abs(denom) > 1e-10) {
+                    var A = (y0 * (x1 - x2) + y1 * (x2 - x0) + y2 * (x0 - x1)) / denom;
+                    var B = (y0 * (x2 - x1) * (x1 + x2) + y1 * (x0 - x2) * (x0 + x2) + y2 * (x1 - x0) * (x0 + x1)) / denom;
+                    if (A > 0) {
+                        var refined = -B / (2 * A);
+                        if (refined > minPeriod && refined < maxPeriod) {
+                            bestTau = refined;
+                        }
+                    }
+                }
+            }
+
+            var freq = sampleRate / bestTau;
+            if (freq < 55 || freq > 1600) return -1;
+
+            return freq;
+        }
+
+        function startMic() {
+            var handleSuccess = function(stream) {
+
+                sourceNode = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                sourceNode.connect(analyser);
+                mediaStream = stream;
+
+                micActive = true;
+                micBtn.classList.add('listening');
+                micLabel.textContent = 'Listening';
+                micError.textContent = '';
+                statusText.textContent = 'Sing or play a tone...';
+
+                updateLoop();
+            };
+
+            var handleError = function(err) {
+                micError.textContent = err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'
+                    ? 'Microphone access was denied. Allow mic permission and try again.'
+                    : 'Mic error: ' + (err.message || err);
+                micBtn.classList.remove('listening');
+                micLabel.textContent = 'Start Microphone';
+                statusText.textContent = 'Microphone unavailable';
+                micBtn.disabled = false;
+            };
+
+            try {
+                navigator.mediaDevices.getUserMedia({
+                    audio: true
+                }).then(handleSuccess, handleError);
+            } catch (err) {
+                handleError(err);
+            }
+        }
+
+        function stopMic() {
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }
+
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(function(t) { t.stop(); });
+                mediaStream = null;
+            }
+            if (sourceNode) {
+                sourceNode.disconnect();
+                sourceNode = null;
+            }
+            analyser = null;
+
+            if (audioContext && audioContext.state !== 'closed') {
+                audioContext.close().catch(function(){});
+                audioContext = null;
+            }
+
+            micActive = false;
+            hasSignal = false;
+            smoothedCents = 0;
+
+            micBtn.classList.remove('listening');
+            micLabel.textContent = 'Start Microphone';
+            noteName.textContent = '\u2014';
+            noteName.className = 'note-name muted';
+            freqDisplay.textContent = '';
+            westernDisplay.textContent = '';
+            freqSep.style.display = 'none';
+            rmsFill.style.width = '0%';
+            centNeedle.style.left = '50%';
+            centNeedle.className = 'cent-needle';
+            centValue.textContent = '';
+            centValue.className = 'cent-value';
+            centTrack.classList.remove('active');
+            statusText.textContent = 'Press Start to begin tuning';
+        }
+
+        function updateLoop() {
+            if (!analyser) return;
+
+            var data = new Float32Array(analyser.fftSize);
+            var sampleRate = audioContext.sampleRate;
+
+            function tick() {
+                if (!analyser || !micActive) {
+                    animFrameId = requestAnimationFrame(tick);
+                    return;
+                }
+
+                analyser.getFloatTimeDomainData(data);
+
+                var sum = 0;
+                for (var i = 0; i < data.length; i++) {
+                    sum += data[i] * data[i];
+                }
+                var rms = Math.sqrt(sum / data.length);
+                rmsFill.style.width = Math.min(100, rms * 2000) + '%';
+
+                var freq = detectPitch(data, sampleRate);
+
+                if (freq > 0) {
+                    var info = freqToNoteInfo(freq);
+                    if (info) {
+                        smoothedCents += (info.cents - smoothedCents) * 0.3;
+
+                        noteName.textContent = info.indian;
+                        noteName.className = 'note-name detected';
+
+                        var absCents = Math.abs(smoothedCents);
+                        if (absCents < 3) {
+                            noteName.classList.add('in-tune');
+                            centNeedle.className = 'cent-needle in-tune';
+                            centValue.className = 'cent-value in-tune';
+                        } else if (absCents < 15) {
+                            centNeedle.className = 'cent-needle near';
+                            centValue.className = 'cent-value near';
+                        } else {
+                            centNeedle.className = 'cent-needle far';
+                            centValue.className = 'cent-value far';
+                        }
+
+                        freqDisplay.textContent = info.freq.toFixed(1) + ' Hz';
+                        westernDisplay.textContent = info.western + info.octave;
+                        freqSep.style.display = 'inline';
+
+                        var pct = Math.max(-50, Math.min(50, smoothedCents));
+                        centNeedle.style.left = (50 + (pct / 50) * 50) + '%';
+
+                        var sign = smoothedCents > 0 ? '+' : '';
+                        centValue.textContent = sign + Math.round(smoothedCents) + ' \u00A2';
+
+                        centTrack.classList.add('active');
+                        hasSignal = true;
+                    }
+                } else {
+                    if (hasSignal) {
+                        noteName.textContent = '\u2014';
+                        noteName.className = 'note-name muted';
+                        freqDisplay.textContent = '';
+                        westernDisplay.textContent = '';
+                        freqSep.style.display = 'none';
+                        centNeedle.style.left = '50%';
+                        centNeedle.className = 'cent-needle';
+                        centValue.textContent = '';
+                        centValue.className = 'cent-value';
+                        centTrack.classList.remove('active');
+                        hasSignal = false;
+                        smoothedCents = 0;
+                    }
+                }
+
+                animFrameId = requestAnimationFrame(tick);
+            }
+
+            tick();
+        }
+
+        micBtn.addEventListener('click', function() {
+            if (micActive) {
+                stopMic();
+            } else {
+                micBtn.disabled = true;
+                micLabel.textContent = 'Requesting...';
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                micBtn.disabled = false;
+                startMic();
+            }
+        });
+
+        settingsToggle.addEventListener('click', function() {
+            settingsPanel.classList.toggle('open');
+            settingsToggle.classList.toggle('open');
+        });
+
+        sensSlider.addEventListener('input', function() {
+            micSensitivity = parseInt(sensSlider.value);
+            sensValue.textContent = micSensitivity;
+        });
+
+        saRefBtn.addEventListener('click', function() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            saRefBtn.classList.add('playing');
+            audioPlayer.src = 'sa.mp3';
+            audioPlayer.load();
+            audioPlayer.play().then(function() {
+                setTimeout(function() {
+                    saRefBtn.classList.remove('playing');
+                }, 1500);
+            }).catch(function() {
+                saRefBtn.classList.remove('playing');
+            });
+        });
+
+        function toggleTanpura() {
+            if (tanpuraPlaying) {
+                stopTanpura();
+            } else {
+                startTanpura();
+            }
+            tanpuraBtn.classList.toggle('playing', tanpuraPlaying);
+            tanpuraBtn.classList.toggle('tanpura-off', !tanpuraPlaying);
+        }
+
+        function getTanpuraFile() {
+            return TANPURA_FILES['Sa+Pa'];
+        }
+
+        function startTanpura() {
+            try {
+                var file = getTanpuraFile();
+                tanpuraAudio = new Audio(file);
+                tanpuraAudio.loop = true;
+                tanpuraAudio.volume = 0.35;
+                tanpuraAudio.play().catch(function(){});
+                tanpuraPlaying = true;
+            } catch (e) {}
+        }
+
+        function stopTanpura() {
+            if (tanpuraAudio) {
+                tanpuraAudio.pause();
+                tanpuraAudio = null;
+            }
+            tanpuraPlaying = false;
+        }
+
+        tanpuraBtn.addEventListener('click', toggleTanpura);
+
+        window.addEventListener('beforeunload', function() {
+            stopMic();
+            stopTanpura();
+        });
+    </script>
+</body>
+</html>
