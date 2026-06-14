@@ -166,7 +166,7 @@
         }
 
         .settings-panel.open {
-            max-height: 500px;
+            max-height: 750px;
             opacity: 1;
             margin-bottom: 24px;
         }
@@ -383,16 +383,6 @@
         .cent-track {
             position: relative;
             height: 6px;
-            background: linear-gradient(90deg,
-                var(--error) 0%,
-                var(--warning) 20%,
-                var(--warning-bg) 35%,
-                var(--success) 45%,
-                var(--success) 55%,
-                var(--warning-bg) 65%,
-                var(--warning) 80%,
-                var(--error) 100%
-            );
             border-radius: 3px;
             opacity: 0.3;
             transition: opacity 0.3s ease;
@@ -618,6 +608,20 @@
                         <span class="diff-value" id="saNoteValue">C</span>
                     </div>
                 </div>
+                <div>
+                    <div class="panel-label">Cent Range</div>
+                    <div class="difficulty-row">
+                        <input type="range" id="centRangeSlider" min="25" max="50" value="50" step="5">
+                        <span class="diff-value" id="centRangeValue">50</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="panel-label">In-Tune Tolerance</div>
+                    <div class="difficulty-row">
+                        <input type="range" id="tolSlider" min="1" max="25" value="5" step="1">
+                        <span class="diff-value" id="tolValue">5</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -649,9 +653,9 @@
                 <div class="cent-needle" id="centNeedle" style="left: 50%;"></div>
             </div>
             <div class="cent-labels">
-                <span>-50 &cent;</span>
+                <span id="centLabelLeft">-50 &cent;</span>
                 <span>0</span>
-                <span>+50 &cent;</span>
+                <span id="centLabelRight">+50 &cent;</span>
             </div>
             <div class="cent-value" id="centValue"></div>
         </div>
@@ -697,6 +701,12 @@
         const sensValue = document.getElementById('sensValue');
         const saNoteSlider = document.getElementById('saNoteSlider');
         const saNoteValue = document.getElementById('saNoteValue');
+        const centRangeSlider = document.getElementById('centRangeSlider');
+        const centRangeValue = document.getElementById('centRangeValue');
+        const tolSlider = document.getElementById('tolSlider');
+        const tolValue = document.getElementById('tolValue');
+        const centLabelLeft = document.getElementById('centLabelLeft');
+        const centLabelRight = document.getElementById('centLabelRight');
         const statusText = document.getElementById('statusText');
         const audioPlayer = document.getElementById('audioPlayer');
 
@@ -711,6 +721,8 @@
         let smoothedCents = 0;
         let micSensitivity = 5;
         let saNoteIndex = 0;
+        let centRange = 50;
+        let greenTolerance = 5;
         const _saIndianMap = [];
 
         function updateSaMapping() {
@@ -720,6 +732,24 @@
             }
         }
         updateSaMapping();
+
+        function updateCentMeterStyle() {
+            var greenPct = Math.min(49, (greenTolerance / centRange) * 50);
+            var midPct = Math.min(49, greenPct * 2.5);
+            centTrack.style.background = 'linear-gradient(90deg, '
+                + 'var(--error) 0%, '
+                + 'var(--warning) ' + (50 - midPct) + '%, '
+                + 'var(--warning-bg) ' + (50 - greenPct) + '%, '
+                + 'var(--success) ' + (50 - greenPct) + '%, '
+                + 'var(--success) ' + (50 + greenPct) + '%, '
+                + 'var(--warning-bg) ' + (50 + greenPct) + '%, '
+                + 'var(--warning) ' + (50 + midPct) + '%, '
+                + 'var(--error) 100%'
+                + ')';
+            centLabelLeft.innerHTML = '-' + centRange + ' &cent;';
+            centLabelRight.innerHTML = '+' + centRange + ' &cent;';
+        }
+        updateCentMeterStyle();
 
         let tanpuraPlaying = false;
         let tanpuraAudio = null;
@@ -961,11 +991,11 @@
                         noteName.className = 'note-name detected';
 
                         var absCents = Math.abs(smoothedCents);
-                        if (absCents < 3) {
+                        if (absCents < greenTolerance) {
                             noteName.classList.add('in-tune');
                             centNeedle.className = 'cent-needle in-tune';
                             centValue.className = 'cent-value in-tune';
-                        } else if (absCents < 15) {
+                        } else if (absCents < greenTolerance * 3) {
                             centNeedle.className = 'cent-needle near';
                             centValue.className = 'cent-value near';
                         } else {
@@ -974,11 +1004,12 @@
                         }
 
                         freqDisplay.textContent = info.freq.toFixed(1) + ' Hz';
-                        westernDisplay.textContent = info.western + info.octave;
+                        var targetFreq = 440 * Math.pow(2, (info.midi - 69) / 12);
+                        westernDisplay.textContent = info.western + info.octave + ' (' + targetFreq.toFixed(1) + ' Hz)';
                         freqSep.style.display = 'inline';
 
-                        var pct = Math.max(-50, Math.min(50, smoothedCents));
-                        centNeedle.style.left = (50 + (pct / 50) * 50) + '%';
+                        var pct = Math.max(-centRange, Math.min(centRange, smoothedCents));
+                        centNeedle.style.left = (50 + (pct / centRange) * 50) + '%';
 
                         var sign = smoothedCents > 0 ? '+' : '';
                         centValue.textContent = sign + Math.round(smoothedCents) + ' \u00A2';
@@ -1038,6 +1069,18 @@
             saNoteIndex = parseInt(saNoteSlider.value);
             saNoteValue.textContent = WESTERN_NOTES[saNoteIndex];
             updateSaMapping();
+        });
+
+        centRangeSlider.addEventListener('input', function() {
+            centRange = parseInt(centRangeSlider.value);
+            centRangeValue.textContent = centRange;
+            updateCentMeterStyle();
+        });
+
+        tolSlider.addEventListener('input', function() {
+            greenTolerance = parseInt(tolSlider.value);
+            tolValue.textContent = greenTolerance;
+            updateCentMeterStyle();
         });
 
         saRefBtn.addEventListener('click', function() {

@@ -166,7 +166,7 @@
         }
 
         .settings-panel.open {
-            max-height: 500px;
+            max-height: 700px;
             opacity: 1;
             margin-bottom: 24px;
         }
@@ -346,7 +346,7 @@
         .chart-wrap canvas {
             display: block;
             width: 100%;
-            height: 520px;
+            height: 680px;
             cursor: grab;
         }
 
@@ -481,7 +481,7 @@
             .header-row h1 { font-size: 1.7rem; }
             .note-name { font-size: 1.8rem; min-height: 2.2rem; }
             .note-name.muted { font-size: 1.2rem; }
-            .chart-wrap canvas { height: 380px; }
+            .chart-wrap canvas { height: 500px; }
             .minimap-wrap canvas { height: 50px; }
         }
 
@@ -489,7 +489,7 @@
             .container { padding: 16px 12px; border-radius: 16px; }
             .header-row h1 { font-size: 1.4rem; }
             .mic-btn { padding: 12px 24px; font-size: 0.9rem; }
-            .chart-wrap canvas { height: 280px; }
+            .chart-wrap canvas { height: 360px; }
             .minimap-wrap canvas { height: 42px; }
         }
 
@@ -524,7 +524,7 @@
                 <div>
                     <div class="panel-label">Range</div>
                     <div class="difficulty-row">
-                        <input type="range" id="rangeSlider" min="2" max="6" value="3" step="0.5">
+                        <input type="range" id="rangeSlider" min="2" max="4" value="3" step="0.5">
                         <span class="diff-value" id="rangeValue">3</span>
                     </div>
                 </div>
@@ -533,6 +533,15 @@
                     <div class="difficulty-row">
                         <input type="range" id="saNoteSlider" min="0" max="11" value="0" step="1">
                         <span class="diff-value" id="saNoteValue">C</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="panel-label">Labels</div>
+                    <div class="difficulty-row">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;font-weight:500">
+                            <input type="checkbox" id="showWesternToggle" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+                            Show Western
+                        </label>
                     </div>
                 </div>
             </div>
@@ -614,6 +623,7 @@
         var rangeValue = document.getElementById('rangeValue');
         var saNoteSlider = document.getElementById('saNoteSlider');
         var saNoteValue = document.getElementById('saNoteValue');
+        var showWesternToggle = document.getElementById('showWesternToggle');
         var statusText = document.getElementById('statusText');
         var audioPlayer = document.getElementById('audioPlayer');
 
@@ -631,6 +641,7 @@
         var micSensitivity = 5;
         var smoothedFreq = -1;
         var saNoteIndex = 0;
+        var showWestern = false;
         var _saIndianMap = [];
         var _saShortMap = [];
 
@@ -803,7 +814,7 @@
 
             var rect = chartCanvas.parentElement.getBoundingClientRect();
             var w = rect.width;
-            var h = chartCanvas.clientHeight || 520;
+            var h = chartCanvas.clientHeight || 680;
             canvasW = w;
             canvasH = h;
             chartCanvas.width = w * dpr;
@@ -826,7 +837,7 @@
             var f = 440 * Math.pow(2, (midi - 69) / 12);
             while (f <= _dispFMax) {
                 var info = freqToNoteInfo(f);
-                if (info) bands.push({ freq: f, name: info.short, octave: info.octave, indian: info.indian });
+                if (info) bands.push({ freq: f, name: info.short, octave: info.octave, indian: info.indian, western: info.western });
                 f *= Math.pow(2, 1/12);
             }
             return bands;
@@ -855,21 +866,31 @@
                              bands[b].indian === 'Ma' || bands[b].indian === 'Pa' ||
                              bands[b].indian === 'Dha' || bands[b].indian === 'Ni';
 
-                ctx.strokeStyle = isSa ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255,255,255,0.06)';
+                ctx.strokeStyle = isSa ? 'rgba(168, 85, 247, 0.35)' : 'rgba(255,255,255,0.06)';
                 ctx.lineWidth = isSa ? 1 : 0.5;
                 ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(w, y);
                 ctx.stroke();
 
-                if (isMain) {
-                    ctx.fillStyle = isSa ? 'rgba(168, 85, 247, 0.5)' : 'rgba(148, 163, 184, 0.35)';
-                    ctx.font = '10px Inter, sans-serif';
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'middle';
-                    var label = bands[b].name + bands[b].octave;
-                    ctx.fillText(label, 6, y - 2);
+                var label = bands[b].name + bands[b].octave;
+                if (showWestern) {
+                    label += ' (' + bands[b].western + ')';
                 }
+
+                if (isSa) {
+                    ctx.fillStyle = '#c084fc';
+                    ctx.font = 'bold 15px Inter, sans-serif';
+                } else if (isMain) {
+                    ctx.fillStyle = 'rgba(241, 245, 249, 0.85)';
+                    ctx.font = '14px Inter, sans-serif';
+                } else {
+                    ctx.fillStyle = 'rgba(168, 85, 247, 0.65)';
+                    ctx.font = 'bold 12px Inter, sans-serif';
+                }
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(label, 6, y - 2);
             }
 
             var totalPts = freqHistory.length;
@@ -1183,6 +1204,12 @@
             saNoteIndex = parseInt(saNoteSlider.value);
             saNoteValue.textContent = WESTERN_NOTES[saNoteIndex];
             updateSaMapping();
+            drawChart();
+        });
+
+        showWesternToggle.addEventListener('change', function() {
+            showWestern = showWesternToggle.checked;
+            drawChart();
         });
 
         scrollBar.addEventListener('input', function() {
@@ -1223,7 +1250,7 @@
                 applyMinimapScroll(minimapPosFromEvent(e.clientX));
             }
             if (isDraggingChart) {
-                var dy = dragStartY - e.clientY;
+                var dy = e.clientY - dragStartY;
                 var semitones = dy * yOctaves * 12 / canvasH;
                 yCenterMidi = Math.round(Math.min(84, Math.max(36, dragStartMidi + semitones)));
                 recalcDisplayRange();
@@ -1270,7 +1297,7 @@
 
         chartCanvas.addEventListener('touchmove', function(e) {
             if (isDraggingChart) {
-                var dy = dragStartY - e.touches[0].clientY;
+                var dy = e.touches[0].clientY - dragStartY;
                 var semitones = dy * yOctaves * 12 / canvasH;
                 yCenterMidi = Math.round(Math.min(84, Math.max(36, dragStartMidi + semitones)));
                 recalcDisplayRange();
