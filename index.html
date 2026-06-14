@@ -213,7 +213,7 @@
 
         .notes-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
         }
 
@@ -826,6 +826,13 @@
                         <span class="diff-value" id="diffValue">4</span>
                     </div>
                 </div>
+                <div>
+                    <div class="panel-label">Sequence Length</div>
+                    <div class="difficulty-row">
+                        <input type="range" id="seqSlider" min="1" max="8" value="1">
+                        <span class="diff-value" id="seqValue">1</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -840,7 +847,7 @@
 
         <div id="questionSection" class="question-section">
             <div class="note-display" id="noteDisplay">?</div>
-            <p>What note is this?</p>
+            <p id="questionLabel">What note is this?</p>
 
             <div class="options-container" id="optionsContainer"></div>
 
@@ -887,9 +894,13 @@
         let filteredNotes = [...notes];
         let selectedThaat = 'Bilawal';
         let difficulty = 4;
+        let sequenceLength = 1;
 
         let gameState = {
-            currentNote: null,
+            currentSequence: [],
+            sequenceIndex: 0,
+            sequenceGuesses: [],
+            roundComplete: false,
             history: [],
             sessionStarted: false,
             audioLoaded: false,
@@ -928,11 +939,14 @@
         const notesGrid = document.getElementById('notesGrid');
         const diffSlider = document.getElementById('diffSlider');
         const diffValue = document.getElementById('diffValue');
+        const seqSlider = document.getElementById('seqSlider');
+        const seqValue = document.getElementById('seqValue');
 
         function init() {
             startButton.addEventListener('click', startSession);
             settingsToggle.addEventListener('click', toggleSettings);
             diffSlider.addEventListener('input', onDiffChange);
+            seqSlider.addEventListener('input', onSeqChange);
 
             buildThaatGrid();
             buildNotesGrid();
@@ -1019,6 +1033,11 @@
             diffValue.textContent = difficulty;
         }
 
+        function onSeqChange() {
+            sequenceLength = parseInt(seqSlider.value);
+            seqValue.textContent = sequenceLength;
+        }
+
         function updateDifficulty() {
             const max = Math.min(filteredNotes.length, 12);
             const min = Math.min(2, max);
@@ -1045,10 +1064,10 @@
             document.querySelector('.intro-section').style.display = 'none';
             settingsPanel.classList.remove('open');
             settingsToggle.classList.remove('open');
-            nextQuestion();
+            nextRound();
         }
 
-        function nextQuestion() {
+        function nextRound() {
             if (filteredNotes.length < 2) {
                 feedback.textContent = "Select at least 2 notes in settings";
                 feedback.className = 'feedback';
@@ -1059,26 +1078,87 @@
             feedback.className = 'feedback';
             feedback.textContent = '';
             gameState.answering = false;
+            gameState.roundComplete = false;
+            gameState.sequenceIndex = 0;
+            gameState.sequenceGuesses = [];
 
-            const randomIndex = Math.floor(Math.random() * filteredNotes.length);
-            gameState.currentNote = filteredNotes[randomIndex];
+            const len = Math.max(1, Math.min(sequenceLength, filteredNotes.length));
+            const seq = [];
+            for (let i = 0; i < len; i++) {
+                let pick;
+                do {
+                    pick = filteredNotes[Math.floor(Math.random() * filteredNotes.length)];
+                } while (i > 0 && pick.name === seq[i - 1].name && filteredNotes.length > 1);
+                seq.push(pick);
+            }
+            gameState.currentSequence = seq;
 
             const tOff = tanpuraPlaying ? '' : ' tanpura-off';
+            const label = document.getElementById('questionLabel');
+            if (sequenceLength > 1) {
+                label.textContent = 'Note 1/' + sequenceLength;
+            } else {
+                label.textContent = 'What note is this?';
+            }
+
             noteDisplay.innerHTML = '\
                 <button class="replay-btn" id="replayBtn"><span class="icon">&#9654;</span><span class="label">replay</span></button>\
                 <button class="ref-btn" id="saRefBtn"><span class="dot"></span> Sa</button>\
                 <button class="ref-btn' + (tanpuraPlaying ? ' playing' : '') + tOff + '" id="tanpuraBtn"><span class="dot"></span> Tanpura</button>\
             ';
-            const replayBtn = document.getElementById('replayBtn');
-            replayBtn.addEventListener('click', () => playAudio(gameState.currentNote.audioFile, replayBtn));
-
-            const saRefBtn = document.getElementById('saRefBtn');
-            saRefBtn.addEventListener('click', () => playAudio('sa.mp3', saRefBtn));
-
+            document.getElementById('replayBtn').addEventListener('click', playSequence);
+            document.getElementById('saRefBtn').addEventListener('click', function() {
+                playAudio('sa.mp3', this);
+            });
             document.getElementById('tanpuraBtn').addEventListener('click', toggleTanpura);
 
-            playAudio(gameState.currentNote.audioFile, replayBtn);
+            playSequence();
             generateOptions();
+        }
+
+        function playSequence() {
+            const seq = gameState.currentSequence;
+            const replayBtn = document.getElementById('replayBtn');
+            if (!replayBtn || seq.length === 0) return;
+            if (replayBtn.classList.contains('playing')) return;
+
+            replayBtn.classList.add('playing');
+            const label = replayBtn.querySelector('.label');
+            let index = 0;
+
+            function playNext() {
+                if (index >= seq.length) {
+                    replayBtn.classList.remove('playing');
+                    label.textContent = 'replay';
+                    return;
+                }
+                label.textContent = 'playing note ' + (index + 1) + '/' + seq.length;
+                const audio = new Audio(seq[index].audioFile);
+                audio.volume = 1;
+                audio.addEventListener('ended', function handler() {
+                    audio.removeEventListener('ended', handler);
+                    index++;
+                    playNext();
+                });
+                audio.play().catch(() => {
+                    index++;
+                    playNext();
+                });
+            }
+
+            playNext();
+        }
+
+        function updateNoteProgress() {
+            const label = document.getElementById('questionLabel');
+            if (!label) return;
+            const idx = gameState.sequenceIndex + 1;
+            const total = gameState.currentSequence.length;
+            if (sequenceLength > 1) {
+                label.textContent = 'Note ' + idx + '/' + total;
+            } else {
+                label.textContent = 'What note is this?';
+            }
         }
 
         function playAudio(audioFile, btnEl) {
@@ -1157,7 +1237,7 @@
         function generateOptions() {
             optionsContainer.innerHTML = '';
 
-            const correctAnswer = gameState.currentNote.name;
+            const correctAnswer = gameState.currentSequence[gameState.sequenceIndex].name;
 
             const pool = filteredNotes.filter(n => n.name !== correctAnswer);
             const wantedWrong = difficulty - 1;
@@ -1182,11 +1262,12 @@
         }
 
         function checkAnswer(selectedOption) {
-            if (gameState.answering) return;
+            if (gameState.answering || gameState.roundComplete) return;
             gameState.answering = true;
 
             const buttons = optionsContainer.querySelectorAll('.option-btn');
-            const correctName = gameState.currentNote.name;
+            const correctNote = gameState.currentSequence[gameState.sequenceIndex];
+            const correctName = correctNote.name;
 
             buttons.forEach(btn => {
                 btn.disabled = true;
@@ -1197,23 +1278,59 @@
                 }
             });
 
-            if (selectedOption === correctName) {
+            const isCorrect = selectedOption === correctName;
+            gameState.sequenceGuesses.push({
+                note: correctName,
+                guessed: selectedOption,
+                correct: isCorrect
+            });
+
+            if (isCorrect) {
                 feedback.textContent = "Correct!";
                 feedback.className = 'feedback correct';
-                addToHistory(correctName, true);
             } else {
                 feedback.textContent = "That was " + correctName;
                 feedback.className = 'feedback incorrect';
-                addToHistory(correctName, false);
             }
 
-            setTimeout(nextQuestion, 1200);
+            const nextIdx = gameState.sequenceIndex + 1;
+
+            if (nextIdx < gameState.currentSequence.length) {
+                setTimeout(() => {
+                    gameState.sequenceIndex = nextIdx;
+                    updateNoteProgress();
+                    feedback.className = 'feedback';
+                    feedback.textContent = '';
+                    generateOptions();
+                    gameState.answering = false;
+                }, 600);
+            } else if (gameState.currentSequence.length === 1) {
+                const score = '1/1';
+                gameState.roundComplete = true;
+                addToHistory(gameState.sequenceGuesses, score);
+                setTimeout(nextRound, 1200);
+            } else {
+                const total = gameState.currentSequence.length;
+                const correctCount = gameState.sequenceGuesses.filter(g => g.correct).length;
+                const score = correctCount + '/' + total;
+
+                feedback.textContent = score + ' correct';
+                if (correctCount === total) {
+                    feedback.className = 'feedback correct';
+                } else {
+                    feedback.className = 'feedback incorrect';
+                }
+
+                gameState.roundComplete = true;
+                addToHistory(gameState.sequenceGuesses, score);
+                setTimeout(nextRound, 2000);
+            }
         }
 
-        function addToHistory(noteName, isCorrect) {
+        function addToHistory(guesses, score) {
             gameState.history.unshift({
-                note: noteName,
-                correct: isCorrect
+                guesses: guesses,
+                score: score
             });
 
             if (gameState.history.length > 50) {
@@ -1230,18 +1347,55 @@
                 const li = document.createElement('li');
                 li.className = 'history-item';
 
-                const noteSpan = document.createElement('span');
-                noteSpan.className = 'history-note';
-                noteSpan.textContent = item.note;
+                const wrap = document.createElement('div');
+                wrap.style.width = '100%';
 
-                const statusSpan = document.createElement('span');
-                statusSpan.className = 'history-status';
-                statusSpan.innerHTML = item.correct ?
-                    '<span class="correct-icon">&#10003;</span>' :
-                    '<span class="incorrect-icon">&#10007;</span>';
+                const correctCount = item.guesses.filter(g => g.correct).length;
+                const total = item.guesses.length;
+                const allCorrect = correctCount === total;
 
-                li.appendChild(noteSpan);
-                li.appendChild(statusSpan);
+                const row1 = document.createElement('div');
+                row1.style.display = 'flex';
+                row1.style.alignItems = 'center';
+                row1.style.gap = '6px';
+                row1.style.marginBottom = '3px';
+
+                item.guesses.forEach(g => {
+                    const span = document.createElement('span');
+                    span.className = 'history-note';
+                    span.textContent = g.note;
+                    span.style.color = g.correct ? 'var(--success)' : 'var(--error)';
+                    row1.appendChild(span);
+                });
+
+                const scoreSpan = document.createElement('span');
+                scoreSpan.style.marginLeft = 'auto';
+                scoreSpan.style.fontWeight = '700';
+                scoreSpan.style.color = allCorrect ? 'var(--success)' : 'var(--error)';
+                scoreSpan.textContent = item.score;
+                row1.appendChild(scoreSpan);
+
+                const row2 = document.createElement('div');
+                row2.style.display = 'flex';
+                row2.style.alignItems = 'center';
+                row2.style.gap = '6px';
+                row2.style.fontSize = '0.82rem';
+
+                item.guesses.forEach(g => {
+                    const span = document.createElement('span');
+                    if (g.correct) {
+                        span.textContent = '\u2713';
+                        span.style.color = 'var(--success)';
+                    } else {
+                        span.textContent = '\u2717 ' + g.guessed;
+                        span.style.color = 'var(--error)';
+                    }
+                    row2.appendChild(span);
+                });
+
+                wrap.appendChild(row1);
+                wrap.appendChild(row2);
+                li.appendChild(wrap);
                 historyList.appendChild(li);
             });
         }
