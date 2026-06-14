@@ -993,7 +993,7 @@
             <div class="feedback" id="feedback"></div>
         </div>
 
-        <div class="history-section">
+        <div class="history-section" id="historySection" style="display:none">
             <h2 class="history-title">Session History</h2>
             <ul class="history-list" id="historyList"></ul>
         </div>
@@ -1075,6 +1075,7 @@
         const optionsContainer = document.getElementById('optionsContainer');
         const feedback = document.getElementById('feedback');
         const historyList = document.getElementById('historyList');
+        const historySection = document.getElementById('historySection');
         const audioPlayer = document.getElementById('audioPlayer');
         const settingsToggle = document.getElementById('settingsToggle');
         const settingsPanel = document.getElementById('settingsPanel');
@@ -1601,6 +1602,10 @@
 
             if (gameState.history.length > 50) {
                 gameState.history = gameState.history.slice(0, 50);
+            }
+
+            if (historySection.style.display === 'none') {
+                historySection.style.display = '';
             }
 
             updateHistoryDisplay();
