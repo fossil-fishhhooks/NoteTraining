@@ -29,6 +29,8 @@
             --success-bg: rgba(16, 185, 129, 0.12);
             --error: #ef4444;
             --error-bg: rgba(239, 68, 68, 0.12);
+            --warning: #eab308;
+            --warning-bg: rgba(234, 179, 8, 0.12);
             --radius: 16px;
             --radius-sm: 10px;
             --radius-full: 9999px;
@@ -51,8 +53,14 @@
             color: var(--text-primary);
             padding: 24px 16px;
             min-height: 100vh;
+            min-height: 100dvh;
             line-height: 1.6;
             animation: bgPulse 20s ease-in-out infinite;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button, label, input[type="range"] {
+            touch-action: manipulation;
         }
 
         @keyframes bgPulse {
@@ -88,8 +96,9 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accent), var(--success), var(--accent));
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), #7c3aed, var(--accent), transparent);
+            opacity: 0.7;
         }
 
         .header-row {
@@ -154,7 +163,7 @@
         }
 
         .settings-panel.open {
-            max-height: 700px;
+            max-height: 900px;
             opacity: 1;
             margin-bottom: 24px;
         }
@@ -305,18 +314,38 @@
             flex: 1;
             -webkit-appearance: none;
             appearance: none;
-            height: 4px;
-            border-radius: 2px;
+            height: 5px;
+            border-radius: 3px;
             background: var(--border);
             outline: none;
             cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .difficulty-row input[type="range"]:hover {
+            background: var(--border-hover);
         }
 
         .difficulty-row input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+            transition: transform 0.15s ease;
+        }
+
+        .difficulty-row input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .difficulty-row input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: var(--accent);
             cursor: pointer;
@@ -324,14 +353,10 @@
             box-shadow: 0 0 8px var(--accent-glow);
         }
 
-        .difficulty-row input[type="range"]::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            border: 2px solid var(--bg-primary);
-            box-shadow: 0 0 8px var(--accent-glow);
+        .difficulty-row input[type="range"]::-moz-range-track {
+            height: 5px;
+            border-radius: 3px;
+            background: var(--border);
         }
 
         .diff-value {
@@ -407,6 +432,11 @@
             border-radius: var(--radius);
             margin: 24px 0;
             animation: fadeIn 0.35s ease-out;
+            transition: border-color 0.3s ease;
+        }
+
+        .question-section:not([style*="display: none"]) {
+            border-color: rgba(168, 85, 247, 0.12);
         }
 
         @keyframes fadeIn {
@@ -426,6 +456,10 @@
             background: transparent;
             border-radius: var(--radius);
             position: relative;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
         }
 
         .replay-btn {
@@ -444,6 +478,7 @@
             font-weight: 500;
             letter-spacing: 0.3px;
             backdrop-filter: blur(8px);
+            min-height: 44px;
         }
 
         .replay-btn .icon {
@@ -599,7 +634,7 @@
         }
 
         .option-btn:active:not(:disabled) {
-            transform: translateY(0);
+            transform: scale(0.97);
         }
 
         .option-btn:disabled {
@@ -612,7 +647,6 @@
             border-color: rgba(16, 185, 129, 0.35);
             color: var(--success);
             box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
-            animation: pulse 0.4s ease;
         }
 
         .option-btn.incorrect {
@@ -648,7 +682,14 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: all 0.3s ease;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(4px);
+        }
+
+        .feedback.show {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .feedback.correct {
@@ -669,6 +710,14 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
+            transition: border-color 0.3s ease;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 28px 16px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
         }
 
         .history-title {
@@ -699,8 +748,9 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 16px;
+            border-left: 3px solid var(--border);
             border-bottom: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
             margin-bottom: 6px;
             background: rgba(255, 255, 255, 0.02);
             transition: all 0.25s ease;
@@ -708,12 +758,30 @@
 
         .history-item:hover {
             background: rgba(255, 255, 255, 0.04);
-            transform: translateX(4px);
+            border-left-color: var(--accent);
         }
 
         .history-item:last-child {
             border-bottom: none;
             margin-bottom: 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
         }
 
         .history-note {
@@ -722,26 +790,9 @@
             color: var(--text-primary);
         }
 
-        .history-status {
-            font-size: 1.5rem;
-            min-width: 36px;
-            text-align: center;
-        }
-
-        .correct-icon {
-            color: var(--success);
-            font-weight: bold;
-        }
-
-        .incorrect-icon {
-            color: var(--error);
-            font-weight: bold;
-        }
-
         .audio-player {
             display: none;
         }
-
 
 
         .hidden {
@@ -812,6 +863,53 @@
             .notes-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
+
+            .replay-btn {
+                padding: 10px 16px;
+                font-size: 0.82rem;
+            }
+
+            .ref-btn {
+                padding: 6px 10px;
+                font-size: 0.78rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 16px 12px;
+                border-radius: 16px;
+            }
+
+            .header-row h1 {
+                font-size: 1.4rem;
+            }
+
+            .option-btn {
+                padding: 14px 12px;
+                font-size: 1rem;
+                min-height: 48px;
+            }
+
+            .settings-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 1.1rem;
+            }
+
+            .thaat-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .notes-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .history-item {
+                padding: 10px 12px;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
         }
 
         @media (min-width: 601px) and (max-width: 1024px) {
@@ -878,8 +976,8 @@
         </div>
 
         <div class="intro-section">
-            <p>Hi!</p>
-            <p>Click the start button to begin your training session.</p>
+            <p>Ready to practice?</p>
+            <p>Choose your thaat and notes, then click start to begin.</p>
         </div>
 
         <div id="startSection">
@@ -887,7 +985,7 @@
         </div>
 
         <div id="questionSection" class="question-section">
-            <div class="note-display" id="noteDisplay">?</div>
+            <div class="note-display" id="noteDisplay"></div>
             <p id="questionLabel">What note is this?</p>
 
             <div class="options-container" id="optionsContainer"></div>
@@ -1152,7 +1250,7 @@
         function nextRound() {
             if (filteredNotes.length < 2) {
                 feedback.textContent = "Select at least 2 notes in settings";
-                feedback.className = 'feedback';
+                feedback.className = 'feedback show';
                 return;
             }
 
@@ -1211,7 +1309,7 @@
             const gen = roundGeneration;
             replayBtn.classList.add('playing');
             const label = replayBtn.querySelector('.label');
-            const gap = 1300 - playbackSpeed * 100;
+            const gap = Math.max(500, 1200 - (playbackSpeed - 1) * 100);
 
             seq.forEach((note, i) => {
                 setTimeout(() => {
@@ -1420,16 +1518,16 @@
 
                 if (allCorrect) {
                     feedback.textContent = "Correct!";
-                    feedback.className = 'feedback correct';
+                    feedback.className = 'feedback correct show';
                 } else {
                     feedback.textContent = "That was " + correctStr;
-                    feedback.className = 'feedback incorrect';
+                    feedback.className = 'feedback incorrect show';
                 }
 
                 const score = correctCount + '/' + total;
                 gameState.roundComplete = true;
                 addToHistory(gameState.sequenceGuesses, score);
-                setTimeout(() => { if (gen !== roundGeneration) return; nextRound(); }, 2000);
+                setTimeout(() => { if (gen !== roundGeneration) return; nextRound(); }, 2400);
 
             } else {
                 const correctNote = gameState.currentSequence[gameState.sequenceIndex];
@@ -1453,10 +1551,10 @@
 
                 if (isCorrect) {
                     feedback.textContent = "Correct!";
-                    feedback.className = 'feedback correct';
+                    feedback.className = 'feedback correct show';
                 } else {
                     feedback.textContent = "That was " + correctName;
-                    feedback.className = 'feedback incorrect';
+                    feedback.className = 'feedback incorrect show';
                 }
 
                 const nextIdx = gameState.sequenceIndex + 1;
@@ -1483,14 +1581,14 @@
 
                     feedback.textContent = score + ' correct';
                     if (correctCount === total) {
-                        feedback.className = 'feedback correct';
+                        feedback.className = 'feedback correct show';
                     } else {
-                        feedback.className = 'feedback incorrect';
+                        feedback.className = 'feedback incorrect show';
                     }
 
                     gameState.roundComplete = true;
                     addToHistory(gameState.sequenceGuesses, score);
-                    setTimeout(() => { if (gen !== roundGeneration) return; nextRound(); }, 2000);
+                    setTimeout(() => { if (gen !== roundGeneration) return; nextRound(); }, 2400);
                 }
             }
         }
@@ -1511,16 +1609,30 @@
         function updateHistoryDisplay() {
             historyList.innerHTML = '';
 
+            if (gameState.history.length === 0) {
+                const empty = document.createElement('li');
+                empty.className = 'history-empty';
+                empty.textContent = 'No sessions yet — start a practice session above.';
+                historyList.appendChild(empty);
+                return;
+            }
+
             gameState.history.forEach(item => {
                 const li = document.createElement('li');
                 li.className = 'history-item';
 
-                const wrap = document.createElement('div');
-                wrap.style.width = '100%';
-
                 const correctCount = item.guesses.filter(g => g.correct).length;
                 const total = item.guesses.length;
                 const allCorrect = correctCount === total;
+                const pct = Math.round((correctCount / total) * 100);
+
+                const accentColor = pct >= 90 ? 'var(--success)' :
+                                    pct >= 70 ? 'var(--accent)' :
+                                    pct >= 40 ? 'var(--warning)' : 'var(--error)';
+                li.style.borderLeftColor = accentColor;
+
+                const wrap = document.createElement('div');
+                wrap.style.width = '100%';
 
                 const row1 = document.createElement('div');
                 row1.style.display = 'flex';
