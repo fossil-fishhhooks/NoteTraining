@@ -867,6 +867,13 @@
                         <span class="diff-value" id="seqValue">1</span>
                     </div>
                 </div>
+                <div>
+                    <div class="panel-label">Speed</div>
+                    <div class="difficulty-row">
+                        <input type="range" id="speedSlider" min="1" max="10" value="5">
+                        <span class="diff-value" id="speedValue">5</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -929,6 +936,7 @@
         let selectedThaat = 'Bilawal';
         let difficulty = 4;
         let sequenceLength = 1;
+        let playbackSpeed = 5;
         let guessMode = 'sequential';
         let roundGeneration = 0;
         let batchUpdate = false;
@@ -978,6 +986,8 @@
         const diffValue = document.getElementById('diffValue');
         const seqSlider = document.getElementById('seqSlider');
         const seqValue = document.getElementById('seqValue');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
 
         function init() {
             startButton.addEventListener('click', startSession);
@@ -986,6 +996,8 @@
             diffSlider.addEventListener('change', restartRound);
             seqSlider.addEventListener('input', onSeqChange);
             seqSlider.addEventListener('change', restartRound);
+            speedSlider.addEventListener('input', onSpeedChange);
+            speedSlider.addEventListener('change', restartRound);
 
             buildThaatGrid();
             buildNotesGrid();
@@ -1096,6 +1108,11 @@
             seqValue.textContent = sequenceLength;
         }
 
+        function onSpeedChange() {
+            playbackSpeed = parseInt(speedSlider.value);
+            speedValue.textContent = playbackSpeed;
+        }
+
         function updateDifficulty() {
             const max = Math.min(filteredNotes.length, 12);
             const min = Math.min(2, max);
@@ -1194,30 +1211,24 @@
             const gen = roundGeneration;
             replayBtn.classList.add('playing');
             const label = replayBtn.querySelector('.label');
-            let index = 0;
+            const gap = 1300 - playbackSpeed * 100;
 
-            function playNext() {
-                if (gen !== roundGeneration) return;
-                if (index >= seq.length) {
-                    replayBtn.classList.remove('playing');
-                    label.textContent = 'replay';
-                    return;
-                }
-                label.textContent = 'playing note ' + (index + 1) + '/' + seq.length;
-                const audio = new Audio(seq[index].audioFile);
-                audio.volume = 1;
-                audio.addEventListener('ended', function handler() {
-                    audio.removeEventListener('ended', handler);
-                    index++;
-                    playNext();
-                });
-                audio.play().catch(() => {
-                    index++;
-                    playNext();
-                });
-            }
-
-            playNext();
+            seq.forEach((note, i) => {
+                setTimeout(() => {
+                    if (gen !== roundGeneration) return;
+                    label.textContent = 'playing note ' + (i + 1) + '/' + seq.length;
+                    const audio = new Audio(note.audioFile);
+                    audio.volume = 1;
+                    audio.play().catch(() => {});
+                    if (i === seq.length - 1) {
+                        audio.addEventListener('ended', () => {
+                            if (gen !== roundGeneration) return;
+                            replayBtn.classList.remove('playing');
+                            label.textContent = 'replay';
+                        });
+                    }
+                }, i * gap);
+            });
         }
 
         function updateNoteProgress() {
