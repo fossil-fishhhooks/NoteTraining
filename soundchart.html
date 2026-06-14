@@ -115,18 +115,26 @@
         }
 
         .back-link {
-            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 500;
-            transition: color 0.2s ease, opacity 0.2s ease;
-            opacity: 0.6;
+            transition: all 0.25s ease;
             flex-shrink: 0;
         }
 
         .back-link:hover {
-            color: var(--accent) !important;
-            opacity: 1;
+            background: var(--surface-hover);
+            border-color: var(--accent);
+            color: var(--accent);
+            gap: 10px;
         }
 
         .settings-btn {
@@ -135,7 +143,6 @@
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -143,99 +150,13 @@
             color: var(--text-muted);
             font-size: 1.3rem;
             flex-shrink: 0;
+            text-decoration: none;
         }
 
         .settings-btn:hover {
             background: var(--surface-hover);
             border-color: var(--border-hover);
             color: var(--text-primary);
-        }
-
-        .settings-btn.open {
-            background: var(--accent-dim);
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .settings-panel {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-            opacity: 0;
-            margin-bottom: 0;
-        }
-
-        .settings-panel.open {
-            max-height: 700px;
-            opacity: 1;
-            margin-bottom: 24px;
-        }
-
-        .settings-inner {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 24px;
-        }
-
-        .settings-inner > * + * {
-            margin-top: 20px;
-        }
-
-        .panel-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-
-        .difficulty-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .difficulty-row input[type="range"] {
-            flex: 1;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 4px;
-            border-radius: 2px;
-            background: var(--border);
-            outline: none;
-            cursor: pointer;
-        }
-
-        .difficulty-row input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            border: 2px solid var(--bg-primary);
-            box-shadow: 0 0 8px var(--accent-glow);
-        }
-
-        .difficulty-row input[type="range"]::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent);
-            cursor: pointer;
-            border: 2px solid var(--bg-primary);
-            box-shadow: 0 0 8px var(--accent-glow);
-        }
-
-        .diff-value {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--accent);
-            min-width: 28px;
-            text-align: center;
         }
 
         .mic-section {
@@ -509,42 +430,7 @@
                 <a href="index.html" class="back-link">&larr; Hub</a>
                 <h1>Soundchart</h1>
             </div>
-            <button class="settings-btn" id="settingsToggle" title="Settings">&#9881;</button>
-        </div>
-
-        <div class="settings-panel" id="settingsPanel">
-            <div class="settings-inner">
-                <div>
-                    <div class="panel-label">Sensitivity</div>
-                    <div class="difficulty-row">
-                        <input type="range" id="sensSlider" min="1" max="10" value="5">
-                        <span class="diff-value" id="sensValue">5</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="panel-label">Range</div>
-                    <div class="difficulty-row">
-                        <input type="range" id="rangeSlider" min="2" max="4" value="3" step="0.5">
-                        <span class="diff-value" id="rangeValue">3</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="panel-label">Sa Note</div>
-                    <div class="difficulty-row">
-                        <input type="range" id="saNoteSlider" min="0" max="11" value="0" step="1">
-                        <span class="diff-value" id="saNoteValue">C</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="panel-label">Labels</div>
-                    <div class="difficulty-row">
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;font-weight:500">
-                            <input type="checkbox" id="showWesternToggle" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
-                            Show Western
-                        </label>
-                    </div>
-                </div>
-            </div>
+            <a href="settings.html?from=soundchart.html" class="settings-btn" title="Settings">&#9881;</a>
         </div>
 
         <div class="mic-section">
@@ -615,15 +501,7 @@
         var timeTotal = document.getElementById('timeTotal');
         var saRefBtn = document.getElementById('saRefBtn');
         var tanpuraBtn = document.getElementById('tanpuraBtn');
-        var settingsToggle = document.getElementById('settingsToggle');
-        var settingsPanel = document.getElementById('settingsPanel');
-        var sensSlider = document.getElementById('sensSlider');
-        var sensValue = document.getElementById('sensValue');
-        var rangeSlider = document.getElementById('rangeSlider');
-        var rangeValue = document.getElementById('rangeValue');
-        var saNoteSlider = document.getElementById('saNoteSlider');
-        var saNoteValue = document.getElementById('saNoteValue');
-        var showWesternToggle = document.getElementById('showWesternToggle');
+
         var statusText = document.getElementById('statusText');
         var audioPlayer = document.getElementById('audioPlayer');
 
@@ -1183,34 +1061,7 @@
             }
         });
 
-        settingsToggle.addEventListener('click', function() {
-            settingsPanel.classList.toggle('open');
-            settingsToggle.classList.toggle('open');
-        });
 
-        sensSlider.addEventListener('input', function() {
-            micSensitivity = parseInt(sensSlider.value);
-            sensValue.textContent = micSensitivity;
-        });
-
-        rangeSlider.addEventListener('input', function() {
-            yOctaves = parseFloat(rangeSlider.value);
-            rangeValue.textContent = yOctaves;
-            recalcDisplayRange();
-            drawChart();
-        });
-
-        saNoteSlider.addEventListener('input', function() {
-            saNoteIndex = parseInt(saNoteSlider.value);
-            saNoteValue.textContent = WESTERN_NOTES[saNoteIndex];
-            updateSaMapping();
-            drawChart();
-        });
-
-        showWesternToggle.addEventListener('change', function() {
-            showWestern = showWesternToggle.checked;
-            drawChart();
-        });
 
         scrollBar.addEventListener('input', function() {
             var val = parseInt(scrollBar.value);
@@ -1360,8 +1211,16 @@
             stopTanpura();
         });
 
+        var _s = localStorage.getItem('saNoteIndex');
+        if (_s !== null) { saNoteIndex = parseInt(_s); updateSaMapping(); }
+        _s = localStorage.getItem('chartSensitivity');
+        if (_s !== null) { micSensitivity = parseInt(_s); }
+        _s = localStorage.getItem('chartYOctaves');
+        if (_s !== null) { yOctaves = parseFloat(_s); }
+        _s = localStorage.getItem('chartShowWestern');
+        if (_s !== null) { showWestern = _s === '1'; }
+
         recalcDisplayRange();
-        saNoteValue.textContent = WESTERN_NOTES[saNoteIndex];
         resizeCanvases();
     </script>
 </body>

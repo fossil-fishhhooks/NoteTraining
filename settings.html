@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #0f0f1a;
+            --surface: rgba(255, 255, 255, 0.04);
+            --surface-hover: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #a855f7;
+            --accent-dim: rgba(168, 85, 247, 0.15);
+            --accent-glow: rgba(168, 85, 247, 0.25);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.12);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.12);
+            --warning: #eab308;
+            --warning-bg: rgba(234, 179, 8, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-full: 9999px;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(88, 28, 135, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            padding: 24px 16px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            line-height: 1.6;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow:
+                0 4px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), #7c3aed, var(--accent), transparent);
+            opacity: 0.7;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .header-row h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .header-row h1::after {
+            content: "";
+            display: block;
+            width: 48px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin: 8px 0 0;
+            border-radius: 2px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .back-link:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+            color: var(--accent);
+            gap: 10px;
+        }
+
+        .settings-section + .settings-section {
+            margin-top: 24px;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .settings-inner {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .settings-inner > * + * {
+            margin-top: 20px;
+        }
+
+        .panel-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .settings-row input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .settings-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .settings-row input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .val {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toggle-row label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .note-hint {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 12px 8px; }
+            .container { padding: 20px 16px; border-radius: 20px; }
+            .header-row h1 { font-size: 1.7rem; }
+        }
+
+        @media (max-width: 400px) {
+            .container { padding: 16px 12px; border-radius: 16px; }
+            .header-row h1 { font-size: 1.4rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-row">
+            <a href="index.html" class="back-link" id="backLink">&larr; Back</a>
+            <h1>Settings</h1>
+            <div style="width:32px"></div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title">Global</div>
+            <div class="settings-inner">
+                <div>
+                    <div class="panel-label">Sa Note</div>
+                    <div class="settings-row">
+                        <input type="range" id="saNoteSlider" min="0" max="11" value="0" step="1">
+                        <span class="val" id="saNoteValue">C</span>
+                    </div>
+                    <div class="note-hint">Changes which Western pitch maps to Sa. Affects all pages.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title">Tuner</div>
+            <div class="settings-inner">
+                <div>
+                    <div class="panel-label">Sensitivity</div>
+                    <div class="settings-row">
+                        <input type="range" id="tuneSensSlider" min="1" max="10" value="5">
+                        <span class="val" id="tuneSensValue">5</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="panel-label">Cent Range</div>
+                    <div class="settings-row">
+                        <input type="range" id="centRangeSlider" min="25" max="50" value="50" step="5">
+                        <span class="val" id="centRangeValue">50</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="panel-label">In-Tune Tolerance</div>
+                    <div class="settings-row">
+                        <input type="range" id="tolSlider" min="1" max="25" value="5" step="1">
+                        <span class="val" id="tolValue">5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title">Soundchart</div>
+            <div class="settings-inner">
+                <div>
+                    <div class="panel-label">Sensitivity</div>
+                    <div class="settings-row">
+                        <input type="range" id="chartSensSlider" min="1" max="10" value="5">
+                        <span class="val" id="chartSensValue">5</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="panel-label">Range</div>
+                    <div class="settings-row">
+                        <input type="range" id="rangeSlider" min="2" max="4" value="3" step="0.5">
+                        <span class="val" id="rangeValue">3</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="toggle-row">
+                        <label>
+                            <input type="checkbox" id="showWesternToggle">
+                            Show Western note names
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title">Note Training</div>
+            <div class="settings-inner">
+                <div>
+                    <div class="panel-label">Notes Per Round</div>
+                    <div class="settings-row">
+                        <input type="range" id="ntDiffSlider" min="2" max="12" value="4">
+                        <span class="val" id="ntDiffValue">4</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="panel-label">Sequence Length</div>
+                    <div class="settings-row">
+                        <input type="range" id="ntSeqSlider" min="1" max="8" value="1">
+                        <span class="val" id="ntSeqValue">1</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="panel-label">Speed</div>
+                    <div class="settings-row">
+                        <input type="range" id="ntSpeedSlider" min="1" max="10" value="5">
+                        <span class="val" id="ntSpeedValue">5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var WESTERN_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        var backLink = document.getElementById('backLink');
+        var params = new URLSearchParams(window.location.search);
+        var from = params.get('from');
+        if (from) {
+            backLink.href = from;
+        }
+
+        var saNoteSlider = document.getElementById('saNoteSlider');
+        var saNoteValue = document.getElementById('saNoteValue');
+        var tuneSensSlider = document.getElementById('tuneSensSlider');
+        var tuneSensValue = document.getElementById('tuneSensValue');
+        var centRangeSlider = document.getElementById('centRangeSlider');
+        var centRangeValue = document.getElementById('centRangeValue');
+        var tolSlider = document.getElementById('tolSlider');
+        var tolValue = document.getElementById('tolValue');
+        var chartSensSlider = document.getElementById('chartSensSlider');
+        var chartSensValue = document.getElementById('chartSensValue');
+        var rangeSlider = document.getElementById('rangeSlider');
+        var rangeValue = document.getElementById('rangeValue');
+        var showWesternToggle = document.getElementById('showWesternToggle');
+        var ntDiffSlider = document.getElementById('ntDiffSlider');
+        var ntDiffValue = document.getElementById('ntDiffValue');
+        var ntSeqSlider = document.getElementById('ntSeqSlider');
+        var ntSeqValue = document.getElementById('ntSeqValue');
+        var ntSpeedSlider = document.getElementById('ntSpeedSlider');
+        var ntSpeedValue = document.getElementById('ntSpeedValue');
+
+        function loadSetting(key, fallback) {
+            var v = localStorage.getItem(key);
+            return v !== null ? v : String(fallback);
+        }
+
+        function persist(key, value) {
+            localStorage.setItem(key, String(value));
+        }
+
+        // Global
+        saNoteSlider.value = loadSetting('saNoteIndex', 0);
+        saNoteValue.textContent = WESTERN_NOTES[parseInt(saNoteSlider.value)];
+        saNoteSlider.addEventListener('input', function() {
+            var v = parseInt(saNoteSlider.value);
+            saNoteValue.textContent = WESTERN_NOTES[v];
+            persist('saNoteIndex', v);
+        });
+
+        // Tune
+        tuneSensSlider.value = loadSetting('tuneSensitivity', 5);
+        tuneSensValue.textContent = tuneSensSlider.value;
+        tuneSensSlider.addEventListener('input', function() {
+            var v = tuneSensSlider.value;
+            tuneSensValue.textContent = v;
+            persist('tuneSensitivity', v);
+        });
+
+        centRangeSlider.value = loadSetting('tuneCentRange', 50);
+        centRangeValue.textContent = centRangeSlider.value;
+        centRangeSlider.addEventListener('input', function() {
+            var v = centRangeSlider.value;
+            centRangeValue.textContent = v;
+            persist('tuneCentRange', v);
+        });
+
+        tolSlider.value = loadSetting('tuneGreenTolerance', 5);
+        tolValue.textContent = tolSlider.value;
+        tolSlider.addEventListener('input', function() {
+            var v = tolSlider.value;
+            tolValue.textContent = v;
+            persist('tuneGreenTolerance', v);
+        });
+
+        // Soundchart
+        chartSensSlider.value = loadSetting('chartSensitivity', 5);
+        chartSensValue.textContent = chartSensSlider.value;
+        chartSensSlider.addEventListener('input', function() {
+            var v = chartSensSlider.value;
+            chartSensValue.textContent = v;
+            persist('chartSensitivity', v);
+        });
+
+        rangeSlider.value = loadSetting('chartYOctaves', 3);
+        rangeValue.textContent = rangeSlider.value;
+        rangeSlider.addEventListener('input', function() {
+            var v = rangeSlider.value;
+            rangeValue.textContent = v;
+            persist('chartYOctaves', v);
+        });
+
+        showWesternToggle.checked = loadSetting('chartShowWestern', 0) === '1';
+        showWesternToggle.addEventListener('change', function() {
+            persist('chartShowWestern', showWesternToggle.checked ? '1' : '0');
+        });
+
+        // Note Training
+        ntDiffSlider.value = loadSetting('ntDiff', 4);
+        ntDiffValue.textContent = ntDiffSlider.value;
+        ntDiffSlider.addEventListener('input', function() {
+            var v = ntDiffSlider.value;
+            ntDiffValue.textContent = v;
+            persist('ntDiff', v);
+        });
+
+        ntSeqSlider.value = loadSetting('ntSeqLen', 1);
+        ntSeqValue.textContent = ntSeqSlider.value;
+        ntSeqSlider.addEventListener('input', function() {
+            var v = ntSeqSlider.value;
+            ntSeqValue.textContent = v;
+            persist('ntSeqLen', v);
+        });
+
+        ntSpeedSlider.value = loadSetting('ntSpeed', 5);
+        ntSpeedValue.textContent = ntSpeedSlider.value;
+        ntSpeedSlider.addEventListener('input', function() {
+            var v = ntSpeedSlider.value;
+            ntSpeedValue.textContent = v;
+            persist('ntSpeed', v);
+        });
+    </script>
+</body>
+</html>

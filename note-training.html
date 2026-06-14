@@ -127,18 +127,26 @@
         }
 
         .back-link {
-            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 500;
-            transition: color 0.2s ease, opacity 0.2s ease;
-            opacity: 0.6;
+            transition: all 0.25s ease;
             flex-shrink: 0;
         }
 
         .back-link:hover {
-            color: var(--accent) !important;
-            opacity: 1;
+            background: var(--surface-hover);
+            border-color: var(--accent);
+            color: var(--accent);
+            gap: 10px;
         }
 
         .settings-btn {
@@ -147,7 +155,6 @@
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -155,18 +162,13 @@
             color: var(--text-muted);
             font-size: 1.3rem;
             flex-shrink: 0;
+            text-decoration: none;
         }
 
         .settings-btn:hover {
             background: var(--surface-hover);
             border-color: var(--border-hover);
             color: var(--text-primary);
-        }
-
-        .settings-btn.open {
-            background: var(--accent-dim);
-            border-color: var(--accent);
-            color: var(--accent);
         }
 
         .settings-panel {
@@ -201,6 +203,68 @@
             text-transform: uppercase;
             color: var(--text-muted);
             margin-bottom: 10px;
+        }
+
+        .session-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .session-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.25s ease;
+        }
+
+        .session-header:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .session-header .chevron {
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+        }
+
+        .session-header.collapsed .chevron {
+            transform: rotate(-90deg);
+        }
+
+        .session-body {
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            max-height: 600px;
+            opacity: 1;
+            padding: 0 20px 20px;
+        }
+
+        .session-body.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding: 0 20px;
+        }
+
+        .session-body.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+        }
+
+        .session-body > * + * {
+            margin-top: 20px;
         }
 
         .thaat-grid {
@@ -949,11 +1013,15 @@
                 <a href="index.html" class="back-link">&larr; Hub</a>
                 <h1>Note Trainer</h1>
             </div>
-            <button class="settings-btn" id="settingsToggle" title="Settings">&#9881;</button>
+            <a href="settings.html?from=note-training.html" class="settings-btn" title="Settings">&#9881;</a>
         </div>
 
-        <div class="settings-panel" id="settingsPanel">
-            <div class="settings-inner">
+        <div class="session-wrap">
+            <button class="session-header" id="sessionHeader">
+                <span class="chevron">&#9660;</span>
+                Exercise Setup
+            </button>
+            <div class="session-body" id="sessionBody">
                 <div>
                     <div class="panel-label">Thaat</div>
                     <div class="thaat-grid" id="thaatGrid"></div>
@@ -967,27 +1035,6 @@
                     <div style="display:flex;gap:8px">
                         <button class="mode-btn active" data-mode="sequential">Sequential</button>
                         <button class="mode-btn" data-mode="parallel">Parallel</button>
-                    </div>
-                </div>
-                <div>
-                    <div class="panel-label">Options</div>
-                    <div class="difficulty-row">
-                        <input type="range" id="diffSlider" min="2" max="12" value="4">
-                        <span class="diff-value" id="diffValue">4</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="panel-label">Sequence Length</div>
-                    <div class="difficulty-row">
-                        <input type="range" id="seqSlider" min="1" max="8" value="1">
-                        <span class="diff-value" id="seqValue">1</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="panel-label">Speed</div>
-                    <div class="difficulty-row">
-                        <input type="range" id="speedSlider" min="1" max="10" value="5">
-                        <span class="diff-value" id="speedValue">5</span>
                     </div>
                 </div>
             </div>
@@ -1053,6 +1100,13 @@
         let difficulty = 4;
         let sequenceLength = 1;
         let playbackSpeed = 5;
+
+        var _nts = localStorage.getItem('ntDiff');
+        if (_nts !== null) { difficulty = parseInt(_nts); }
+        _nts = localStorage.getItem('ntSeqLen');
+        if (_nts !== null) { sequenceLength = parseInt(_nts); }
+        _nts = localStorage.getItem('ntSpeed');
+        if (_nts !== null) { playbackSpeed = parseInt(_nts); }
         let guessMode = 'sequential';
         let roundGeneration = 0;
         let batchUpdate = false;
@@ -1095,26 +1149,24 @@
         const historyList = document.getElementById('historyList');
         const historySection = document.getElementById('historySection');
         const audioPlayer = document.getElementById('audioPlayer');
-        const settingsToggle = document.getElementById('settingsToggle');
-        const settingsPanel = document.getElementById('settingsPanel');
+        const sessionHeader = document.getElementById('sessionHeader');
+        const sessionBody = document.getElementById('sessionBody');
         const thaatGrid = document.getElementById('thaatGrid');
         const notesGrid = document.getElementById('notesGrid');
-        const diffSlider = document.getElementById('diffSlider');
-        const diffValue = document.getElementById('diffValue');
-        const seqSlider = document.getElementById('seqSlider');
-        const seqValue = document.getElementById('seqValue');
-        const speedSlider = document.getElementById('speedSlider');
-        const speedValue = document.getElementById('speedValue');
 
         function init() {
             startButton.addEventListener('click', startSession);
-            settingsToggle.addEventListener('click', toggleSettings);
-            diffSlider.addEventListener('input', onDiffChange);
-            diffSlider.addEventListener('change', restartRound);
-            seqSlider.addEventListener('input', onSeqChange);
-            seqSlider.addEventListener('change', restartRound);
-            speedSlider.addEventListener('input', onSpeedChange);
-            speedSlider.addEventListener('change', restartRound);
+
+            var sessCollapsed = localStorage.getItem('ntSessionCollapsed');
+            if (sessCollapsed === '1') {
+                sessionHeader.classList.add('collapsed');
+                sessionBody.classList.add('collapsed');
+            }
+            sessionHeader.addEventListener('click', function() {
+                var collapsed = sessionBody.classList.toggle('collapsed');
+                sessionHeader.classList.toggle('collapsed');
+                localStorage.setItem('ntSessionCollapsed', collapsed ? '1' : '0');
+            });
 
             buildThaatGrid();
             buildNotesGrid();
@@ -1123,11 +1175,6 @@
             initModeButtons();
 
             preloadAudio();
-        }
-
-        function toggleSettings() {
-            const isOpen = settingsPanel.classList.toggle('open');
-            settingsToggle.classList.toggle('open', isOpen);
         }
 
         function buildThaatGrid() {
@@ -1215,30 +1262,11 @@
             updateDifficulty();
         }
 
-        function onDiffChange() {
-            difficulty = parseInt(diffSlider.value);
-            diffValue.textContent = difficulty;
-        }
-
-        function onSeqChange() {
-            sequenceLength = parseInt(seqSlider.value);
-            seqValue.textContent = sequenceLength;
-        }
-
-        function onSpeedChange() {
-            playbackSpeed = parseInt(speedSlider.value);
-            speedValue.textContent = playbackSpeed;
-        }
-
         function updateDifficulty() {
             const max = Math.min(filteredNotes.length, 12);
             const min = Math.min(2, max);
-            diffSlider.max = max;
-            diffSlider.min = min;
             if (difficulty > max) difficulty = max;
             if (difficulty < min) difficulty = min;
-            diffSlider.value = difficulty;
-            diffValue.textContent = difficulty;
         }
 
         function preloadAudio() {
@@ -1254,8 +1282,6 @@
             gameState.sessionStarted = true;
             startButton.style.display = 'none';
             document.querySelector('.intro-section').style.display = 'none';
-            settingsPanel.classList.remove('open');
-            settingsToggle.classList.remove('open');
             nextRound();
         }
 
