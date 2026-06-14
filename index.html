@@ -23,6 +23,7 @@
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
             --accent: #a855f7;
+            --accent-dim: rgba(168, 85, 247, 0.15);
             --accent-glow: rgba(168, 85, 247, 0.25);
             --success: #10b981;
             --success-bg: rgba(16, 185, 129, 0.12);
@@ -91,24 +92,230 @@
             background: linear-gradient(90deg, var(--accent), var(--success), var(--accent));
         }
 
-        h1 {
-            text-align: center;
-            color: var(--text-primary);
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 28px;
-            font-size: 2.2rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
             position: relative;
         }
 
-        h1::after {
+        .header-row h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .header-row h1::after {
             content: "";
             display: block;
-            width: 64px;
+            width: 48px;
             height: 3px;
             background: linear-gradient(90deg, var(--accent), transparent);
-            margin: 12px auto 0;
+            margin: 8px 0 0;
             border-radius: 2px;
+        }
+
+        .settings-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .settings-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .settings-btn.open {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .settings-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+
+        .settings-panel.open {
+            max-height: 700px;
+            opacity: 1;
+            margin-bottom: 24px;
+        }
+
+        .settings-inner {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .settings-inner > * + * {
+            margin-top: 20px;
+        }
+
+        .panel-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .thaat-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .thaat-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 10px 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .thaat-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .thaat-btn.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .note-check {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 6px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .note-check:hover {
+            background: var(--surface-hover);
+        }
+
+        .note-check.checked {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .note-check input {
+            display: none;
+        }
+
+        .note-check .ck {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1.5px solid var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            font-size: 9px;
+            font-weight: bold;
+            color: transparent;
+        }
+
+        .note-check.checked .ck {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: #0a0a0f;
+        }
+
+        .difficulty-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .difficulty-row input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .difficulty-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .difficulty-row input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .diff-value {
+            min-width: 36px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
         }
 
         .intro-section {
@@ -183,11 +390,12 @@
         .note-display {
             text-align: center;
             margin: 16px 0 24px;
-            min-height: 100px;
+            min-height: 80px;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
+            gap: 10px;
+            flex-wrap: wrap;
             background: transparent;
             border-radius: var(--radius);
             position: relative;
@@ -199,26 +407,25 @@
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 14px 28px;
+            gap: 8px;
+            padding: 12px 22px;
             border-radius: var(--radius-full);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             color: var(--text-secondary);
             font-family: inherit;
-            font-size: 0.95rem;
+            font-size: 0.88rem;
             font-weight: 500;
-            letter-spacing: 0.5px;
-            position: relative;
+            letter-spacing: 0.3px;
             backdrop-filter: blur(8px);
         }
 
         .replay-btn .icon {
-            font-size: 1.1rem;
+            font-size: 1rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             transition: all 0.3s ease;
         }
 
@@ -257,51 +464,56 @@
             to { transform: scale(1.15); }
         }
 
-        .sa-ref-btn {
+        .ref-btn {
             background: transparent;
             border: none;
             cursor: pointer;
             color: var(--text-muted);
             font-family: inherit;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             font-weight: 500;
             letter-spacing: 0.5px;
-            padding: 6px 14px;
+            padding: 8px 14px;
             border-radius: var(--radius-full);
             transition: all 0.25s ease;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            margin-top: 10px;
-            opacity: 0.6;
+            gap: 6px;
+            opacity: 0.7;
         }
 
-        .sa-ref-btn:hover {
+        .ref-btn:hover {
             color: var(--accent);
             background: rgba(168, 85, 247, 0.08);
             opacity: 1;
         }
 
-        .sa-ref-btn:active {
+        .ref-btn:active {
             transform: scale(0.95);
         }
 
-        .sa-ref-btn .dot {
+        .ref-btn .dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: var(--accent);
+            background: currentColor;
             display: inline-block;
             opacity: 0.5;
+            transition: all 0.3s ease;
         }
 
-        .sa-ref-btn.playing {
+        .ref-btn.playing {
             color: var(--accent);
             opacity: 1;
         }
 
-        .sa-ref-btn.playing .dot {
+        .ref-btn.playing .dot {
+            opacity: 1;
             animation: dotGlow 0.8s ease infinite alternate;
+        }
+
+        .ref-btn.tanpura-off .dot {
+            background: var(--text-muted);
         }
 
         @keyframes dotGlow {
@@ -424,34 +636,6 @@
             border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
-        .continue-btn {
-            background: linear-gradient(135deg, var(--accent), #7c3aed);
-            color: #0a0a0f;
-            border: none;
-            padding: 14px 36px;
-            font-size: 1rem;
-            border-radius: var(--radius-full);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin: 8px auto 0;
-            display: none;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            box-shadow: 0 4px 16px rgba(168, 85, 247, 0.2);
-            font-family: inherit;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .continue-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(168, 85, 247, 0.3);
-        }
-
-        .continue-btn:active {
-            transform: translateY(0);
-        }
-
         .history-section {
             margin-top: 28px;
             padding: 24px;
@@ -531,6 +715,8 @@
             display: none;
         }
 
+
+
         .hidden {
             display: none !important;
         }
@@ -545,12 +731,11 @@
                 border-radius: 20px;
             }
 
-            h1 {
+            .header-row h1 {
                 font-size: 1.7rem;
             }
 
             .note-display {
-                font-size: 3.5rem;
                 min-height: 80px;
             }
 
@@ -588,6 +773,18 @@
                 font-size: 1rem;
                 padding: 12px 16px;
             }
+
+            .settings-inner {
+                padding: 16px;
+            }
+
+            .thaat-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .notes-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
 
         @media (min-width: 601px) and (max-width: 1024px) {
@@ -607,84 +804,232 @@
 </head>
 <body>
     <div class="container">
-        <h1> Note Trainer </h1>
-        
+        <div class="header-row">
+            <h1>Note Trainer</h1>
+            <button class="settings-btn" id="settingsToggle" title="Settings">&#9881;</button>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-inner">
+                <div>
+                    <div class="panel-label">Thaat</div>
+                    <div class="thaat-grid" id="thaatGrid"></div>
+                </div>
+                <div>
+                    <div class="panel-label">Notes</div>
+                    <div class="notes-grid" id="notesGrid"></div>
+                </div>
+                <div>
+                    <div class="panel-label">Options</div>
+                    <div class="difficulty-row">
+                        <input type="range" id="diffSlider" min="2" max="12" value="4">
+                        <span class="diff-value" id="diffValue">4</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="intro-section">
             <p>Hi!</p>
             <p>Click the start button to begin your training session.</p>
         </div>
-        
+
         <div id="startSection">
             <button class="start-btn" id="startButton">Start Training Session</button>
         </div>
-        
+
         <div id="questionSection" class="question-section">
             <div class="note-display" id="noteDisplay">?</div>
             <p>What note is this?</p>
-            
-            <div class="options-container" id="optionsContainer">
-                <!-- Options will be inserted here by JavaScript -->
-            </div>
-            
+
+            <div class="options-container" id="optionsContainer"></div>
+
             <div class="feedback" id="feedback"></div>
-            <button class="continue-btn" id="continueButton">Continue</button>
         </div>
-        
+
         <div class="history-section">
             <h2 class="history-title">Session History</h2>
-            <ul class="history-list" id="historyList">
-                <!-- History items will be inserted here by JavaScript -->
-            </ul>
+            <ul class="history-list" id="historyList"></ul>
         </div>
     </div>
-    
+
     <audio id="audioPlayer" class="audio-player"></audio>
 
     <script>
-        // Note data with Hindustani names and corresponding audio files
         const notes = [
-            { name: "Sa", audioFile: "sa.mp3" },
-            { name: "Re Komal", audioFile: "re_komal.mp3" },
-            { name: "Re", audioFile: "re.mp3" },
-            { name: "Ga Komal", audioFile: "ga_komal.mp3" },
-            { name: "Ga", audioFile: "ga.mp3" },
-            { name: "Ma", audioFile: "ma.mp3" },
-            { name: "Ma Tivra", audioFile: "ma_tivra.mp3" },
-            { name: "Pa", audioFile: "pa.mp3" },
+            { name: "Sa",        audioFile: "sa.mp3" },
+            { name: "Re Komal",  audioFile: "re_komal.mp3" },
+            { name: "Re",        audioFile: "re.mp3" },
+            { name: "Ga Komal",  audioFile: "ga_komal.mp3" },
+            { name: "Ga",        audioFile: "ga.mp3" },
+            { name: "Ma",        audioFile: "ma.mp3" },
+            { name: "Ma Tivra",  audioFile: "ma_tivra.mp3" },
+            { name: "Pa",        audioFile: "pa.mp3" },
             { name: "Dha Komal", audioFile: "dha_komal.mp3" },
-            { name: "Dha", audioFile: "dha.mp3" },
-            { name: "Ni Komal", audioFile: "ni_komal.mp3" },
-            { name: "Ni", audioFile: "ni.mp3" }
+            { name: "Dha",       audioFile: "dha.mp3" },
+            { name: "Ni Komal",  audioFile: "ni_komal.mp3" },
+            { name: "Ni",        audioFile: "ni.mp3" }
         ];
 
-        // Game state
+        const THAATS = {
+            Bilawal:  ["Sa","Re","Ga","Ma","Pa","Dha","Ni"],
+            Kalyan:   ["Sa","Re","Ga","Ma Tivra","Pa","Dha","Ni"],
+            Khamaj:   ["Sa","Re","Ga","Ma","Pa","Dha","Ni Komal"],
+            Bhairav:  ["Sa","Re Komal","Ga","Ma","Pa","Dha Komal","Ni"],
+            Bhairavi: ["Sa","Re Komal","Ga Komal","Ma","Pa","Dha Komal","Ni Komal"],
+            Asavari:  ["Sa","Re","Ga Komal","Ma","Pa","Dha Komal","Ni Komal"],
+            Kafi:     ["Sa","Re","Ga Komal","Ma","Pa","Dha","Ni Komal"],
+            Marwa:    ["Sa","Re Komal","Ga","Ma Tivra","Pa","Dha","Ni"],
+            Purvi:    ["Sa","Re Komal","Ga","Ma Tivra","Pa","Dha Komal","Ni"],
+            Todi:     ["Sa","Re Komal","Ga Komal","Ma Tivra","Pa","Dha","Ni"]
+        };
+
+        let filteredNotes = [...notes];
+        let selectedThaat = 'Bilawal';
+        let difficulty = 4;
+
         let gameState = {
             currentNote: null,
             history: [],
             sessionStarted: false,
-            audioLoaded: false
+            audioLoaded: false,
+            answering: false
         };
 
-        // DOM elements
+        let tanpuraPlaying = false;
+        let tanpuraAudio = null;
+        const TANPURA_FILES = {
+            'Sa+Pa': 'tanpura_sa_pa.mp3',
+            'Sa+Ma Tivra': 'tanpura_sa_ma.mp3'
+        };
+        const DRONE_MAP = {
+            Bilawal:  'Sa+Pa',
+            Kalyan:   'Sa+Ma Tivra',
+            Khamaj:   'Sa+Pa',
+            Bhairav:  'Sa+Pa',
+            Bhairavi: 'Sa+Pa',
+            Asavari:  'Sa+Pa',
+            Kafi:     'Sa+Pa',
+            Marwa:    'Sa+Ma Tivra',
+            Purvi:    'Sa+Ma Tivra',
+            Todi:     'Sa+Ma Tivra'
+        };
+
         const startButton = document.getElementById('startButton');
         const questionSection = document.getElementById('questionSection');
         const noteDisplay = document.getElementById('noteDisplay');
         const optionsContainer = document.getElementById('optionsContainer');
         const feedback = document.getElementById('feedback');
-        const continueButton = document.getElementById('continueButton');
         const historyList = document.getElementById('historyList');
         const audioPlayer = document.getElementById('audioPlayer');
+        const settingsToggle = document.getElementById('settingsToggle');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const thaatGrid = document.getElementById('thaatGrid');
+        const notesGrid = document.getElementById('notesGrid');
+        const diffSlider = document.getElementById('diffSlider');
+        const diffValue = document.getElementById('diffValue');
 
-        // Initialize the app
         function init() {
             startButton.addEventListener('click', startSession);
-            continueButton.addEventListener('click', nextQuestion);
-            
-            // Preload audio files
+            settingsToggle.addEventListener('click', toggleSettings);
+            diffSlider.addEventListener('input', onDiffChange);
+
+            buildThaatGrid();
+            buildNotesGrid();
+            selectThaat(selectedThaat);
+            updateDifficulty();
+
             preloadAudio();
         }
 
-        // Preload audio files
+        function toggleSettings() {
+            const isOpen = settingsPanel.classList.toggle('open');
+            settingsToggle.classList.toggle('open', isOpen);
+        }
+
+        function buildThaatGrid() {
+            Object.keys(THAATS).forEach(name => {
+                const btn = document.createElement('button');
+                btn.className = 'thaat-btn';
+                btn.textContent = name;
+                btn.dataset.thaat = name;
+                btn.addEventListener('click', () => selectThaat(name));
+                thaatGrid.appendChild(btn);
+            });
+        }
+
+        function buildNotesGrid() {
+            notes.forEach(n => {
+                const label = document.createElement('label');
+                label.className = 'note-check';
+                label.dataset.note = n.name;
+
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = true;
+                cb.addEventListener('change', () => {
+                    label.classList.toggle('checked', cb.checked);
+                    applyFilter();
+                });
+
+                const ck = document.createElement('span');
+                ck.className = 'ck';
+                ck.textContent = '✓';
+
+                const txt = document.createTextNode(' ' + n.name);
+
+                label.appendChild(cb);
+                label.appendChild(ck);
+                label.appendChild(txt);
+                notesGrid.appendChild(label);
+            });
+        }
+
+        function selectThaat(name) {
+            selectedThaat = name;
+            document.querySelectorAll('.thaat-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.thaat === name);
+            });
+
+            const noteNames = THAATS[name];
+            document.querySelectorAll('.note-check').forEach(label => {
+                const cb = label.querySelector('input');
+                const isIn = noteNames.includes(label.dataset.note);
+                cb.checked = isIn;
+                label.classList.toggle('checked', isIn);
+            });
+
+            applyFilter();
+            updateTanpura();
+        }
+
+        function applyFilter() {
+            const checked = new Set();
+            document.querySelectorAll('.note-check.checked').forEach(label => {
+                checked.add(label.dataset.note);
+            });
+
+            filteredNotes = notes.filter(n => checked.has(n.name));
+
+            updateDifficulty();
+        }
+
+        function onDiffChange() {
+            difficulty = parseInt(diffSlider.value);
+            diffValue.textContent = difficulty;
+        }
+
+        function updateDifficulty() {
+            const max = Math.min(filteredNotes.length, 12);
+            const min = Math.min(2, max);
+            diffSlider.max = max;
+            diffSlider.min = min;
+            if (difficulty > max) difficulty = max;
+            if (difficulty < min) difficulty = min;
+            diffSlider.value = difficulty;
+            diffValue.textContent = difficulty;
+        }
+
         function preloadAudio() {
             notes.forEach(note => {
                 const audio = new Audio();
@@ -694,58 +1039,63 @@
             gameState.audioLoaded = true;
         }
 
-        // Start a new training session
         function startSession() {
             gameState.sessionStarted = true;
             startButton.style.display = 'none';
             document.querySelector('.intro-section').style.display = 'none';
+            settingsPanel.classList.remove('open');
+            settingsToggle.classList.remove('open');
             nextQuestion();
         }
 
-        // Generate a random note and show the question
         function nextQuestion() {
+            if (filteredNotes.length < 2) {
+                feedback.textContent = "Select at least 2 notes in settings";
+                feedback.className = 'feedback';
+                return;
+            }
+
             questionSection.style.display = 'block';
             feedback.className = 'feedback';
             feedback.textContent = '';
-            continueButton.style.display = 'none';
-            
-            const randomIndex = Math.floor(Math.random() * notes.length);
-            gameState.currentNote = notes[randomIndex];
-            
-            // Build replay button UI
+            gameState.answering = false;
+
+            const randomIndex = Math.floor(Math.random() * filteredNotes.length);
+            gameState.currentNote = filteredNotes[randomIndex];
+
+            const tOff = tanpuraPlaying ? '' : ' tanpura-off';
             noteDisplay.innerHTML = '\
-                <button class="replay-btn" id="replayBtn"><span class="icon">&#9654;</span><span class="label">replay note</span></button>\
-                <button class="sa-ref-btn" id="saRefBtn"><span class="dot"></span> Sa</button>\
+                <button class="replay-btn" id="replayBtn"><span class="icon">&#9654;</span><span class="label">replay</span></button>\
+                <button class="ref-btn" id="saRefBtn"><span class="dot"></span> Sa</button>\
+                <button class="ref-btn' + (tanpuraPlaying ? ' playing' : '') + tOff + '" id="tanpuraBtn"><span class="dot"></span> Tanpura</button>\
             ';
             const replayBtn = document.getElementById('replayBtn');
             replayBtn.addEventListener('click', () => playAudio(gameState.currentNote.audioFile, replayBtn));
-            
+
             const saRefBtn = document.getElementById('saRefBtn');
-            saRefBtn.addEventListener('click', () => playAudio('sa.mp3', saRefBtn, true));
-            
+            saRefBtn.addEventListener('click', () => playAudio('sa.mp3', saRefBtn));
+
+            document.getElementById('tanpuraBtn').addEventListener('click', toggleTanpura);
+
             playAudio(gameState.currentNote.audioFile, replayBtn);
             generateOptions();
         }
 
         function playAudio(audioFile, btnEl) {
-            if (!gameState.audioLoaded) {
-                feedback.textContent = "Loading audio...";
-                return;
-            }
-            
+            if (!gameState.audioLoaded) return;
+
             try {
                 if (btnEl) btnEl.classList.add('playing');
                 audioPlayer.src = audioFile;
                 audioPlayer.load();
                 const playPromise = audioPlayer.play();
-                
+
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
                         setTimeout(() => {
                             if (btnEl) btnEl.classList.remove('playing');
                         }, 1500);
-                    }).catch(error => {
-                        console.error("Audio playback failed:", error);
+                    }).catch(() => {
                         if (btnEl) btnEl.classList.remove('playing');
                     });
                 } else {
@@ -754,38 +1104,74 @@
                     }, 1500);
                 }
             } catch (error) {
-                console.error("Error playing audio:", error);
                 if (btnEl) btnEl.classList.remove('playing');
             }
         }
 
-        // Generate multiple choice options
+        function toggleTanpura() {
+            if (tanpuraPlaying) {
+                stopTanpura();
+            } else {
+                startTanpura();
+            }
+            const btn = document.getElementById('tanpuraBtn');
+            if (btn) {
+                btn.classList.toggle('playing', tanpuraPlaying);
+                btn.classList.toggle('tanpura-off', !tanpuraPlaying);
+            }
+        }
+
+        function getTanpuraFile() {
+            const key = DRONE_MAP[selectedThaat] || 'Sa+Pa';
+            return TANPURA_FILES[key];
+        }
+
+        function startTanpura() {
+            try {
+                const file = getTanpuraFile();
+                tanpuraAudio = new Audio(file);
+                tanpuraAudio.loop = true;
+                tanpuraAudio.volume = 0.35;
+                tanpuraAudio.play().catch(() => {});
+                tanpuraPlaying = true;
+            } catch (e) {
+                console.error('Tanpura error:', e);
+            }
+        }
+
+        function stopTanpura() {
+            if (tanpuraAudio) {
+                tanpuraAudio.pause();
+                tanpuraAudio = null;
+            }
+            tanpuraPlaying = false;
+        }
+
+        function updateTanpura() {
+            if (tanpuraPlaying) {
+                stopTanpura();
+                startTanpura();
+            }
+        }
+
         function generateOptions() {
             optionsContainer.innerHTML = '';
-            
-            // Get the correct answer
+
             const correctAnswer = gameState.currentNote.name;
-            
-            // Create array of all notes
-            const allNotes = [...notes];
-            
-            // Remove the correct note from the pool
-            const availableNotes = allNotes.filter(note => note.name !== correctAnswer);
-            
-            // Select 3 random incorrect options
-            const incorrectOptions = [];
-            while (incorrectOptions.length < 3 && availableNotes.length > 0) {
-                const randomIndex = Math.floor(Math.random() * availableNotes.length);
-                incorrectOptions.push(availableNotes.splice(randomIndex, 1)[0].name);
+
+            const pool = filteredNotes.filter(n => n.name !== correctAnswer);
+            const wantedWrong = difficulty - 1;
+            const wrongOptions = [];
+
+            const shuffled = [...pool];
+            shuffleArray(shuffled);
+            for (let i = 0; i < Math.min(wantedWrong, shuffled.length); i++) {
+                wrongOptions.push(shuffled[i].name);
             }
-            
-            // Combine correct and incorrect options
-            const allOptions = [correctAnswer, ...incorrectOptions];
-            
-            // Shuffle the options
+
+            const allOptions = [correctAnswer, ...wrongOptions];
             shuffleArray(allOptions);
-            
-            // Create buttons for each option
+
             allOptions.forEach(option => {
                 const button = document.createElement('button');
                 button.className = 'option-btn';
@@ -795,73 +1181,71 @@
             });
         }
 
-        // Check if the selected answer is correct
         function checkAnswer(selectedOption) {
+            if (gameState.answering) return;
+            gameState.answering = true;
+
             const buttons = optionsContainer.querySelectorAll('.option-btn');
-            
-            // Disable all buttons
+            const correctName = gameState.currentNote.name;
+
             buttons.forEach(btn => {
                 btn.disabled = true;
+                if (btn.textContent === correctName) {
+                    btn.classList.add('correct');
+                } else if (btn.textContent === selectedOption && selectedOption !== correctName) {
+                    btn.classList.add('incorrect');
+                }
             });
-            
-            // Check if correct
-            if (selectedOption === gameState.currentNote.name) {
-                feedback.textContent = "Correct! Well done!";
+
+            if (selectedOption === correctName) {
+                feedback.textContent = "Correct!";
                 feedback.className = 'feedback correct';
-                
-                // Add to history with checkmark
-                addToHistory(gameState.currentNote.name, true);
+                addToHistory(correctName, true);
             } else {
-                feedback.textContent = "Try again! That's not the right note.";
+                feedback.textContent = "That was " + correctName;
                 feedback.className = 'feedback incorrect';
-                
-                // Add to history with X mark
-                addToHistory(gameState.currentNote.name, false);
+                addToHistory(correctName, false);
             }
-            
-            // Show continue button
-            continueButton.style.display = 'block';
+
+            setTimeout(nextQuestion, 1200);
         }
 
-        // Add item to session history
         function addToHistory(noteName, isCorrect) {
             gameState.history.unshift({
                 note: noteName,
                 correct: isCorrect
             });
-            
+
             if (gameState.history.length > 50) {
                 gameState.history = gameState.history.slice(0, 50);
             }
-            
+
             updateHistoryDisplay();
         }
 
-        // Update the history display
         function updateHistoryDisplay() {
             historyList.innerHTML = '';
-            
+
             gameState.history.forEach(item => {
                 const li = document.createElement('li');
                 li.className = 'history-item';
-                
+
                 const noteSpan = document.createElement('span');
                 noteSpan.className = 'history-note';
                 noteSpan.textContent = item.note;
-                
+
                 const statusSpan = document.createElement('span');
                 statusSpan.className = 'history-status';
-                statusSpan.innerHTML = item.correct ? 
-                    '<span class="correct-icon">✓</span>' : 
-                    '<span class="incorrect-icon">✗</span>';
-                
+                statusSpan.innerHTML = item.correct ?
+                    '<span class="correct-icon">&#10003;</span>' :
+                    '<span class="incorrect-icon">&#10007;</span>';
+
                 li.appendChild(noteSpan);
                 li.appendChild(statusSpan);
                 historyList.appendChild(li);
             });
         }
 
-        // Shuffle array using Fisher-Yates algorithm
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -869,11 +1253,7 @@
             }
         }
 
-        // Initialize the app when page loads
         window.onload = init;
     </script>
 </body>
 </html>
-
-
-
