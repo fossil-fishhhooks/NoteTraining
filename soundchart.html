@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Soundchart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #0f0f1a;
+            --surface: rgba(255, 255, 255, 0.04);
+            --surface-hover: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #a855f7;
+            --accent-dim: rgba(168, 85, 247, 0.15);
+            --accent-glow: rgba(168, 85, 247, 0.25);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.12);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.12);
+            --warning: #eab308;
+            --warning-bg: rgba(234, 179, 8, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-full: 9999px;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(88, 28, 135, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            padding: 24px 16px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            line-height: 1.6;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button, label, input[type="range"] {
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 780px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow:
+                0 4px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), #7c3aed, var(--accent), transparent);
+            opacity: 0.7;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .header-row h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .header-row h1::after {
+            content: "";
+            display: block;
+            width: 48px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin: 8px 0 0;
+            border-radius: 2px;
+        }
+
+        .back-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s ease, opacity 0.2s ease;
+            opacity: 0.6;
+            flex-shrink: 0;
+        }
+
+        .back-link:hover {
+            color: var(--accent) !important;
+            opacity: 1;
+        }
+
+        .settings-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .settings-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .settings-btn.open {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .settings-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+
+        .settings-panel.open {
+            max-height: 500px;
+            opacity: 1;
+            margin-bottom: 24px;
+        }
+
+        .settings-inner {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .settings-inner > * + * {
+            margin-top: 20px;
+        }
+
+        .panel-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .difficulty-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .difficulty-row input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .difficulty-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .difficulty-row input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .diff-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .mic-section {
+            text-align: center;
+            padding: 8px 0 12px;
+        }
+
+        .mic-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 14px 32px;
+            font-size: 1rem;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 48px;
+        }
+
+        .mic-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .mic-btn.listening {
+            background: var(--success-bg);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+
+        .mic-btn .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .mic-btn.listening .dot {
+            animation: dotBlink 1s ease infinite;
+        }
+
+        .mic-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @keyframes dotBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .mic-error {
+            color: var(--error);
+            font-size: 0.85rem;
+            margin-top: 8px;
+            min-height: 20px;
+        }
+
+        .note-display {
+            text-align: center;
+            padding: 8px 0 6px;
+        }
+
+        .note-name {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            min-height: 2.6rem;
+            transition: color 0.15s ease;
+        }
+
+        .note-name.detected {
+            color: var(--accent);
+        }
+
+        .note-name.muted {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+
+        .freq-row {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 2px;
+            min-height: 1.2rem;
+        }
+
+        .chart-wrap {
+            margin: 10px 0 6px;
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .chart-wrap canvas {
+            display: block;
+            width: 100%;
+            height: 520px;
+            cursor: grab;
+        }
+
+        .minimap-wrap {
+            margin: 4px 0 6px;
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .minimap-wrap canvas {
+            display: block;
+            width: 100%;
+            height: 64px;
+        }
+
+        .scroll-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 2px 0 8px;
+        }
+
+        .scroll-row input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .scroll-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .scroll-row input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .scroll-row .time-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            min-width: 36px;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .ref-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 44px;
+        }
+
+        .ref-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .ref-btn:active {
+            transform: scale(0.97);
+        }
+
+        .ref-btn.playing {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .ref-btn .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+        }
+
+        .ref-btn.tanpura-off .dot {
+            background: var(--text-muted);
+        }
+
+        .status-text {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+            min-height: 1.1rem;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 12px 8px; }
+            .container { padding: 20px 16px; border-radius: 20px; }
+            .header-row h1 { font-size: 1.7rem; }
+            .note-name { font-size: 1.8rem; min-height: 2.2rem; }
+            .note-name.muted { font-size: 1.2rem; }
+            .chart-wrap canvas { height: 380px; }
+            .minimap-wrap canvas { height: 50px; }
+        }
+
+        @media (max-width: 400px) {
+            .container { padding: 16px 12px; border-radius: 16px; }
+            .header-row h1 { font-size: 1.4rem; }
+            .mic-btn { padding: 12px 24px; font-size: 0.9rem; }
+            .chart-wrap canvas { height: 280px; }
+            .minimap-wrap canvas { height: 42px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                <a href="index.html" class="back-link">&larr; Hub</a>
+                <h1>Soundchart</h1>
+            </div>
+            <button class="settings-btn" id="settingsToggle" title="Settings">&#9881;</button>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-inner">
+                <div>
+                    <div class="panel-label">Sensitivity</div>
+                    <div class="difficulty-row">
+                        <input type="range" id="sensSlider" min="1" max="10" value="5">
+                        <span class="diff-value" id="sensValue">5</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="panel-label">Range</div>
+                    <div class="difficulty-row">
+                        <input type="range" id="rangeSlider" min="2" max="6" value="3" step="0.5">
+                        <span class="diff-value" id="rangeValue">3</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mic-section">
+            <button class="mic-btn" id="micBtn">
+                <span class="dot"></span>
+                <span id="micLabel">Start Microphone</span>
+            </button>
+            <div class="mic-error" id="micError"></div>
+        </div>
+
+        <div class="note-display">
+            <div class="note-name muted" id="noteName">&mdash;</div>
+            <div class="freq-row" id="freqRow">
+                <span id="freqDisplay"></span>
+            </div>
+        </div>
+
+        <div class="chart-wrap">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+
+        <div class="minimap-wrap" id="minimapWrap">
+            <canvas id="minimapCanvas"></canvas>
+        </div>
+
+        <div class="scroll-row">
+            <span class="time-label" id="timeLabel">0s</span>
+            <input type="range" id="scrollBar" min="0" max="0" value="0">
+            <span class="time-label" id="timeTotal">0s</span>
+        </div>
+
+        <div class="controls">
+            <button class="ref-btn" id="saRefBtn"><span class="dot"></span> Sa</button>
+            <button class="ref-btn tanpura-off" id="tanpuraBtn"><span class="dot"></span> Tanpura</button>
+        </div>
+
+        <div class="status-text" id="statusText">Press Start to begin</div>
+    </div>
+
+    <audio id="audioPlayer" style="display:none"></audio>
+
+    <script>
+        var WESTERN_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        var INDIAN_MAP = {
+            'C': 'Sa', 'C#': 'Re Komal',
+            'D': 'Re', 'D#': 'Ga Komal',
+            'E': 'Ga', 'F': 'Ma',
+            'F#': 'Ma Tivra', 'G': 'Pa',
+            'G#': 'Dha Komal', 'A': 'Dha',
+            'A#': 'Ni Komal', 'B': 'Ni'
+        };
+
+        var SHORT_MAP = {
+            'Sa':'Sa','Re Komal':'r\u0324','Re':'Re','Ga Komal':'g\u0324','Ga':'Ga',
+            'Ma':'Ma','Ma Tivra':'M\u0304','Pa':'Pa','Dha Komal':'d\u0324','Dha':'Dha',
+            'Ni Komal':'n\u0324','Ni':'Ni'
+        };
+
+        var micBtn = document.getElementById('micBtn');
+        var micLabel = document.getElementById('micLabel');
+        var micError = document.getElementById('micError');
+        var noteName = document.getElementById('noteName');
+        var freqDisplay = document.getElementById('freqDisplay');
+        var chartCanvas = document.getElementById('chartCanvas');
+        var scrollBar = document.getElementById('scrollBar');
+        var timeLabel = document.getElementById('timeLabel');
+        var timeTotal = document.getElementById('timeTotal');
+        var saRefBtn = document.getElementById('saRefBtn');
+        var tanpuraBtn = document.getElementById('tanpuraBtn');
+        var settingsToggle = document.getElementById('settingsToggle');
+        var settingsPanel = document.getElementById('settingsPanel');
+        var sensSlider = document.getElementById('sensSlider');
+        var sensValue = document.getElementById('sensValue');
+        var rangeSlider = document.getElementById('rangeSlider');
+        var rangeValue = document.getElementById('rangeValue');
+        var statusText = document.getElementById('statusText');
+        var audioPlayer = document.getElementById('audioPlayer');
+
+        var ctx = chartCanvas.getContext('2d');
+
+        var minimapCanvas = document.getElementById('minimapCanvas');
+        var minimapCtx = minimapCanvas.getContext('2d');
+
+        var audioContext = null;
+        var analyser = null;
+        var mediaStream = null;
+        var sourceNode = null;
+        var animFrameId = null;
+        var micActive = false;
+        var micSensitivity = 5;
+        var smoothedFreq = -1;
+        var tanpuraPlaying = false;
+        var tanpuraAudio = null;
+
+        var freqHistory = [];
+        var noteHistory = [];
+        var MAX_HISTORY = 6000;
+        var VISIBLE_SECONDS = 8;
+        var yOctaves = 3;
+        var yCenterMidi = 64;
+        var _dispFMin = 110;
+        var _dispFMax = 880;
+
+        function recalcDisplayRange() {
+            var cf = 440 * Math.pow(2, (yCenterMidi - 69) / 12);
+            var half = yOctaves / 2;
+            _dispFMin = cf / Math.pow(2, half);
+            _dispFMax = cf * Math.pow(2, half);
+        }
+        var atLiveEdge = true;
+        var isDraggingMinimap = false;
+        var isDraggingChart = false;
+        var dragStartY = 0;
+        var dragStartMidi = 0;
+        var canvasW = 0;
+        var canvasH = 0;
+
+        var TANPURA_FILES = {
+            'Sa+Pa': 'tanpura_sa_pa.mp3',
+            'Sa+Ma Tivra': 'tanpura_sa_ma.mp3'
+        };
+
+        function midiFromFreq(freq) {
+            return 12 * Math.log2(freq / 440) + 69;
+        }
+
+        function freqToNoteInfo(freq) {
+            if (freq <= 0) return null;
+            var semitones = midiFromFreq(freq);
+            var midi = Math.round(semitones);
+            var cents = (semitones - midi) * 100;
+            var octave = Math.floor(midi / 12) - 1;
+            var noteIndex = ((midi % 12) + 12) % 12;
+            return {
+                western: WESTERN_NOTES[noteIndex],
+                indian: INDIAN_MAP[WESTERN_NOTES[noteIndex]],
+                short: SHORT_MAP[INDIAN_MAP[WESTERN_NOTES[noteIndex]]],
+                octave: octave,
+                cents: cents,
+                freq: freq,
+                midi: midi
+            };
+        }
+
+        function freqToY(freq, h) {
+            var logFreq = Math.log(freq / _dispFMin);
+            var logRange = Math.log(_dispFMax / _dispFMin);
+            return h * (1 - logFreq / logRange);
+        }
+
+        function detectPitch(buffer, sampleRate) {
+            var SIZE = buffer.length;
+            var sumSq = 0;
+            for (var i = 0; i < SIZE; i++) sumSq += buffer[i] * buffer[i];
+            if (sumSq < 0.001) return -1;
+            var rms = Math.sqrt(sumSq / SIZE);
+            var rmsThreshold = 0.012 - (micSensitivity - 1) * 0.001;
+            if (rmsThreshold < 0.001) rmsThreshold = 0.001;
+            if (rms < rmsThreshold) return -1;
+
+            var minPeriod = Math.round(sampleRate / 1600);
+            var maxPeriod = Math.round(sampleRate / 55);
+
+            var d = new Float32Array(maxPeriod + 1);
+            for (var tau = 1; tau <= maxPeriod; tau++) {
+                var diff = 0;
+                var n = SIZE - tau;
+                for (var i = 0; i < n; i++) {
+                    var delta = buffer[i] - buffer[i + tau];
+                    diff += delta * delta;
+                }
+                d[tau] = diff / n;
+            }
+
+            var runningSum = 0;
+            var dNorm = new Float32Array(maxPeriod + 1);
+            for (var tau = 1; tau <= maxPeriod; tau++) {
+                runningSum += d[tau];
+                if (runningSum > 0) {
+                    dNorm[tau] = d[tau] * tau / runningSum;
+                } else {
+                    dNorm[tau] = 1;
+                }
+            }
+
+            var threshold = 0.06 + (micSensitivity - 1) * 0.02;
+            var bestTau = -1;
+            for (var tau = minPeriod; tau <= maxPeriod; tau++) {
+                if (dNorm[tau] < threshold) {
+                    bestTau = tau;
+                    break;
+                }
+            }
+
+            if (bestTau === -1) {
+                var minVal = Infinity;
+                for (var tau = minPeriod; tau <= maxPeriod; tau++) {
+                    if (dNorm[tau] < minVal) {
+                        minVal = dNorm[tau];
+                        bestTau = tau;
+                    }
+                }
+            }
+
+            if (bestTau <= 0) return -1;
+
+            var candidates = [bestTau];
+            if (bestTau > minPeriod * 2) {
+                var ht = Math.round(bestTau / 2);
+                if (ht >= minPeriod) candidates.push(ht);
+            }
+            if (bestTau * 2 <= maxPeriod) {
+                candidates.push(Math.round(bestTau * 2));
+            }
+            candidates.sort(function(a,b){return a-b;});
+            bestTau = candidates[0];
+            for (var c = 1; c < candidates.length; c++) {
+                if (dNorm[candidates[c]] < dNorm[bestTau] * 0.92) {
+                    bestTau = candidates[c];
+                }
+            }
+
+            if (bestTau > minPeriod && bestTau < maxPeriod) {
+                var x0 = bestTau - 1, y0 = dNorm[x0];
+                var x1 = bestTau, y1 = dNorm[x1];
+                var x2 = bestTau + 1, y2 = dNorm[x2];
+                var denom = x0 * (x1 - x2) + x1 * (x2 - x0) + x2 * (x0 - x1);
+                if (Math.abs(denom) > 1e-10) {
+                    var A = (y0 * (x1 - x2) + y1 * (x2 - x0) + y2 * (x0 - x1)) / denom;
+                    var B = (y0 * (x2 - x1) * (x1 + x2) + y1 * (x0 - x2) * (x0 + x2) + y2 * (x1 - x0) * (x0 + x1)) / denom;
+                    if (A > 0) {
+                        var refined = -B / (2 * A);
+                        if (refined > minPeriod && refined < maxPeriod) {
+                            bestTau = refined;
+                        }
+                    }
+                }
+            }
+
+            var freq = sampleRate / bestTau;
+            if (freq < 60 || freq > 1100) return -1;
+            return freq;
+        }
+
+        function resizeCanvases() {
+            var dpr = window.devicePixelRatio || 1;
+
+            var rect = chartCanvas.parentElement.getBoundingClientRect();
+            var w = rect.width;
+            var h = chartCanvas.clientHeight || 520;
+            canvasW = w;
+            canvasH = h;
+            chartCanvas.width = w * dpr;
+            chartCanvas.height = h * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            var mRect = minimapCanvas.parentElement.getBoundingClientRect();
+            var mw = mRect.width;
+            var mh = minimapCanvas.clientHeight || 64;
+            minimapCanvas.width = mw * dpr;
+            minimapCanvas.height = mh * dpr;
+            minimapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            drawChart();
+        }
+
+        function getNoteBands() {
+            var bands = [];
+            var midi = Math.round(12 * Math.log2(_dispFMin / 440) + 69) - 1;
+            var f = 440 * Math.pow(2, (midi - 69) / 12);
+            while (f <= _dispFMax) {
+                var info = freqToNoteInfo(f);
+                if (info) bands.push({ freq: f, name: info.short, octave: info.octave, indian: info.indian });
+                f *= Math.pow(2, 1/12);
+            }
+            return bands;
+        }
+
+        function drawChart() {
+            var w = canvasW;
+            var h = canvasH;
+            if (w === 0 || h === 0) return;
+
+            ctx.clearRect(0, 0, w, h);
+
+            var bands = getNoteBands();
+
+            for (var b = 1; b < bands.length; b++) {
+                var yTop = freqToY(bands[b].freq, h);
+                var yBottom = freqToY(bands[b - 1].freq, h);
+                ctx.fillStyle = (b - 1) % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.07)';
+                ctx.fillRect(0, yTop, w, yBottom - yTop);
+            }
+
+            for (var b = 0; b < bands.length; b++) {
+                var y = freqToY(bands[b].freq, h);
+                var isSa = bands[b].indian === 'Sa';
+                var isMain = isSa || bands[b].indian === 'Re' || bands[b].indian === 'Ga' ||
+                             bands[b].indian === 'Ma' || bands[b].indian === 'Pa' ||
+                             bands[b].indian === 'Dha' || bands[b].indian === 'Ni';
+
+                ctx.strokeStyle = isSa ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255,255,255,0.06)';
+                ctx.lineWidth = isSa ? 1 : 0.5;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+
+                if (isMain) {
+                    ctx.fillStyle = isSa ? 'rgba(168, 85, 247, 0.5)' : 'rgba(148, 163, 184, 0.35)';
+                    ctx.font = '10px Inter, sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    var label = bands[b].name + bands[b].octave;
+                    ctx.fillText(label, 6, y - 2);
+                }
+            }
+
+            var totalPts = freqHistory.length;
+            var visiblePts = VISIBLE_SECONDS * 60;
+
+            var scrollMax = parseInt(scrollBar.max) || 0;
+            var scrollVal = parseInt(scrollBar.value) || 0;
+
+            var startIdx = 0;
+            if (totalPts > 0) {
+                if (scrollMax > 0) {
+                    var ratio = scrollVal / scrollMax;
+                    startIdx = Math.round(ratio * (totalPts - visiblePts));
+                    if (startIdx < 0) startIdx = 0;
+                    if (startIdx > totalPts - visiblePts) startIdx = totalPts - visiblePts;
+                } else {
+                    startIdx = Math.max(0, totalPts - visiblePts);
+                }
+            }
+
+            var segments = [];
+            var curSeg = [];
+            for (var i = startIdx; i < startIdx + visiblePts && i < totalPts; i++) {
+                if (freqHistory[i] > 0) {
+                    var px = ((i - startIdx) / visiblePts) * w;
+                    var py = freqToY(freqHistory[i], h);
+                    curSeg.push({ x: px, y: py });
+                } else if (curSeg.length > 0) {
+                    segments.push(curSeg);
+                    curSeg = [];
+                }
+            }
+            if (curSeg.length > 0) segments.push(curSeg);
+
+            for (var s = 0; s < segments.length; s++) {
+                var pts = segments[s];
+                if (pts.length < 2) continue;
+
+                ctx.beginPath();
+                ctx.moveTo(pts[0].x, pts[0].y);
+                for (var j = 1; j < pts.length; j++) ctx.lineTo(pts[j].x, pts[j].y);
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.2)';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(pts[0].x, pts[0].y);
+                for (var j = 1; j < pts.length; j++) ctx.lineTo(pts[j].x, pts[j].y);
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.7)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            if (segments.length > 0) {
+                var last = segments[segments.length - 1];
+                last = last[last.length - 1];
+                var grad = ctx.createRadialGradient(last.x, last.y, 0, last.x, last.y, 8);
+                grad.addColorStop(0, 'rgba(168, 85, 247, 0.7)');
+                grad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(last.x, last.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#c084fc';
+                ctx.beginPath();
+                ctx.arc(last.x, last.y, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            if (totalPts > 0) {
+                var currentPos = startIdx;
+                var totalSec = Math.round(totalPts / 60);
+                var currentSec = Math.round(currentPos / 60);
+                timeLabel.textContent = '-' + (totalSec - currentSec) + 's';
+                timeTotal.textContent = totalSec + 's';
+            } else {
+                timeLabel.textContent = '0s';
+                timeTotal.textContent = '0s';
+            }
+
+            drawMinimap();
+        }
+
+        function updateScrollbar() {
+            var totalPts = freqHistory.length;
+            var visiblePts = VISIBLE_SECONDS * 60;
+
+            if (totalPts <= visiblePts) {
+                scrollBar.max = 0;
+                scrollBar.value = 0;
+                return;
+            }
+
+            var maxVal = totalPts - visiblePts;
+            scrollBar.max = maxVal;
+
+            if (atLiveEdge) {
+                scrollBar.value = maxVal;
+            }
+        }
+
+        function drawMinimap() {
+            var dpr = window.devicePixelRatio || 1;
+            var mw = minimapCanvas.width / dpr;
+            var mh = minimapCanvas.height / dpr;
+            if (mw === 0 || mh === 0) return;
+
+            minimapCtx.clearRect(0, 0, mw, mh);
+
+            minimapCtx.fillStyle = 'rgba(0,0,0,0.3)';
+            minimapCtx.fillRect(0, 0, mw, mh);
+
+            var total = freqHistory.length;
+            if (total < 2) return;
+
+            var first = true;
+            minimapCtx.beginPath();
+            for (var i = 0; i < total; i++) {
+                if (freqHistory[i] > 0) {
+                    var x = (i / total) * mw;
+                    var y = freqToY(freqHistory[i], mh);
+                    if (first) {
+                        minimapCtx.moveTo(x, y);
+                        first = false;
+                    } else {
+                        minimapCtx.lineTo(x, y);
+                    }
+                }
+            }
+            minimapCtx.strokeStyle = 'rgba(168, 85, 247, 0.4)';
+            minimapCtx.lineWidth = 1;
+            minimapCtx.stroke();
+
+            var visiblePts = VISIBLE_SECONDS * 60;
+            var scrollMax = parseInt(scrollBar.max) || 0;
+            var scrollVal = parseInt(scrollBar.value) || 0;
+
+            var startFrac = 0;
+            if (total > visiblePts) {
+                if (scrollMax > 0) {
+                    startFrac = scrollVal / scrollMax;
+                } else {
+                    startFrac = 1 - visiblePts / total;
+                }
+            }
+
+            var vpStart = startFrac * total;
+            var vpEnd = vpStart + visiblePts;
+            if (vpEnd > total) vpEnd = total;
+
+            var vpLeft = (vpStart / total) * mw;
+            var vpRight = (vpEnd / total) * mw;
+
+            minimapCtx.fillStyle = 'rgba(168, 85, 247, 0.15)';
+            minimapCtx.fillRect(vpLeft, 0, vpRight - vpLeft, mh);
+            minimapCtx.strokeStyle = 'rgba(168, 85, 247, 0.5)';
+            minimapCtx.lineWidth = 1;
+            minimapCtx.strokeRect(vpLeft, 0, vpRight - vpLeft, mh);
+        }
+
+        function startMic() {
+            var handleSuccess = function(stream) {
+                sourceNode = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                sourceNode.connect(analyser);
+                mediaStream = stream;
+
+                micActive = true;
+                micBtn.classList.add('listening');
+                micLabel.textContent = 'Listening';
+                micError.textContent = '';
+                statusText.textContent = 'Sing or play a tone. Drag in the plot to move the range; drag in the minimap to see history.';
+
+                resizeCanvases();
+                updateLoop();
+            };
+
+            var handleError = function(err) {
+                micError.textContent = err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'
+                    ? 'Microphone access was denied. Allow mic permission and try again.'
+                    : 'Mic error: ' + (err.message || err);
+                micBtn.classList.remove('listening');
+                micLabel.textContent = 'Start Microphone';
+                statusText.textContent = 'Microphone unavailable';
+                micBtn.disabled = false;
+            };
+
+            try {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(handleSuccess, handleError);
+            } catch (err) {
+                handleError(err);
+            }
+        }
+
+        function stopMic() {
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(function(t) { t.stop(); });
+                mediaStream = null;
+            }
+            if (sourceNode) {
+                sourceNode.disconnect();
+                sourceNode = null;
+            }
+            analyser = null;
+            if (audioContext && audioContext.state !== 'closed') {
+                audioContext.close().catch(function(){});
+                audioContext = null;
+            }
+            micActive = false;
+            freqHistory = [];
+            noteHistory = [];
+
+            micBtn.classList.remove('listening');
+            micLabel.textContent = 'Start Microphone';
+            noteName.textContent = '\u2014';
+            noteName.className = 'note-name muted';
+            freqDisplay.textContent = '';
+            scrollBar.max = 0;
+            scrollBar.value = 0;
+            timeLabel.textContent = '0s';
+            timeTotal.textContent = '0s';
+            ctx.clearRect(0, 0, canvasW, canvasH);
+            minimapCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+            statusText.textContent = 'Press Start to begin';
+        }
+
+        function updateLoop() {
+            if (!analyser) return;
+
+            var data = new Float32Array(analyser.fftSize);
+            var sampleRate = 44100;
+
+            function tick() {
+                if (!analyser || !micActive) {
+                    animFrameId = requestAnimationFrame(tick);
+                    return;
+                }
+
+                analyser.getFloatTimeDomainData(data);
+                var rawFreq = detectPitch(data, audioContext ? audioContext.sampleRate : 44100);
+
+                if (rawFreq > 0) {
+                    smoothedFreq = smoothedFreq > 0 ? smoothedFreq * 0.5 + rawFreq * 0.5 : rawFreq;
+                    var info = freqToNoteInfo(smoothedFreq);
+                    if (info) {
+                        noteName.textContent = info.indian;
+                        noteName.className = 'note-name detected';
+                        freqDisplay.textContent = info.freq.toFixed(1) + ' Hz  \u00B7  ' + info.western + info.octave;
+
+                        freqHistory.push(smoothedFreq);
+                        noteHistory.push(info);
+                    }
+                } else {
+                    smoothedFreq = -1;
+                    freqHistory.push(-1);
+                    noteHistory.push(null);
+                }
+
+                if (freqHistory.length > MAX_HISTORY) {
+                    freqHistory.splice(0, freqHistory.length - MAX_HISTORY);
+                    noteHistory.splice(0, noteHistory.length - MAX_HISTORY);
+                }
+                updateScrollbar();
+                drawChart();
+
+                animFrameId = requestAnimationFrame(tick);
+            }
+
+            tick();
+        }
+
+        micBtn.addEventListener('click', function() {
+            if (micActive) {
+                stopMic();
+            } else {
+                micBtn.disabled = true;
+                micLabel.textContent = 'Requesting...';
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                micBtn.disabled = false;
+                startMic();
+            }
+        });
+
+        settingsToggle.addEventListener('click', function() {
+            settingsPanel.classList.toggle('open');
+            settingsToggle.classList.toggle('open');
+        });
+
+        sensSlider.addEventListener('input', function() {
+            micSensitivity = parseInt(sensSlider.value);
+            sensValue.textContent = micSensitivity;
+        });
+
+        rangeSlider.addEventListener('input', function() {
+            yOctaves = parseFloat(rangeSlider.value);
+            rangeValue.textContent = yOctaves;
+            recalcDisplayRange();
+            drawChart();
+        });
+
+        scrollBar.addEventListener('input', function() {
+            var val = parseInt(scrollBar.value);
+            var max = parseInt(scrollBar.max);
+            atLiveEdge = (val >= max);
+            drawChart();
+        });
+
+        var minimapWrap = document.getElementById('minimapWrap');
+
+        function minimapPosFromEvent(clientX) {
+            var rect = minimapWrap.getBoundingClientRect();
+            return (clientX - rect.left) / rect.width;
+        }
+
+        function applyMinimapScroll(ratio) {
+            var total = freqHistory.length;
+            var visiblePts = VISIBLE_SECONDS * 60;
+            if (total <= visiblePts) return;
+            var maxScroll = total - visiblePts;
+            var newScroll = Math.round(ratio * maxScroll);
+            if (newScroll < 0) newScroll = 0;
+            if (newScroll > maxScroll) newScroll = maxScroll;
+            scrollBar.max = maxScroll;
+            scrollBar.value = newScroll;
+            atLiveEdge = (newScroll >= maxScroll);
+            drawChart();
+        }
+
+        minimapWrap.addEventListener('mousedown', function(e) {
+            isDraggingMinimap = true;
+            applyMinimapScroll(minimapPosFromEvent(e.clientX));
+        });
+
+        window.addEventListener('mousemove', function(e) {
+            if (isDraggingMinimap) {
+                applyMinimapScroll(minimapPosFromEvent(e.clientX));
+            }
+            if (isDraggingChart) {
+                var dy = dragStartY - e.clientY;
+                var semitones = dy * yOctaves * 12 / canvasH;
+                yCenterMidi = Math.round(Math.min(84, Math.max(36, dragStartMidi + semitones)));
+                recalcDisplayRange();
+                drawChart();
+            }
+        });
+
+        window.addEventListener('mouseup', function() {
+            isDraggingMinimap = false;
+            if (isDraggingChart) {
+                isDraggingChart = false;
+                chartCanvas.style.cursor = '';
+            }
+        });
+
+        minimapWrap.addEventListener('touchstart', function(e) {
+            isDraggingMinimap = true;
+            applyMinimapScroll(minimapPosFromEvent(e.touches[0].clientX));
+        });
+
+        minimapWrap.addEventListener('touchmove', function(e) {
+            if (isDraggingMinimap) {
+                applyMinimapScroll(minimapPosFromEvent(e.touches[0].clientX));
+                e.preventDefault();
+            }
+        });
+
+        minimapWrap.addEventListener('touchend', function() {
+            isDraggingMinimap = false;
+        });
+
+        chartCanvas.addEventListener('mousedown', function(e) {
+            isDraggingChart = true;
+            dragStartY = e.clientY;
+            dragStartMidi = yCenterMidi;
+            chartCanvas.style.cursor = 'grabbing';
+        });
+
+        chartCanvas.addEventListener('touchstart', function(e) {
+            isDraggingChart = true;
+            dragStartY = e.touches[0].clientY;
+            dragStartMidi = yCenterMidi;
+        });
+
+        chartCanvas.addEventListener('touchmove', function(e) {
+            if (isDraggingChart) {
+                var dy = dragStartY - e.touches[0].clientY;
+                var semitones = dy * yOctaves * 12 / canvasH;
+                yCenterMidi = Math.round(Math.min(84, Math.max(36, dragStartMidi + semitones)));
+                recalcDisplayRange();
+                drawChart();
+                e.preventDefault();
+            }
+        });
+
+        chartCanvas.addEventListener('touchend', function() {
+            isDraggingChart = false;
+        });
+
+        saRefBtn.addEventListener('click', function() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            saRefBtn.classList.add('playing');
+            audioPlayer.src = 'sa.mp3';
+            audioPlayer.load();
+            audioPlayer.play().then(function() {
+                setTimeout(function() { saRefBtn.classList.remove('playing'); }, 1500);
+            }).catch(function() {
+                saRefBtn.classList.remove('playing');
+            });
+        });
+
+        function toggleTanpura() {
+            if (tanpuraPlaying) { stopTanpura(); }
+            else { startTanpura(); }
+            tanpuraBtn.classList.toggle('playing', tanpuraPlaying);
+            tanpuraBtn.classList.toggle('tanpura-off', !tanpuraPlaying);
+        }
+
+        function startTanpura() {
+            try {
+                tanpuraAudio = new Audio(TANPURA_FILES['Sa+Pa']);
+                tanpuraAudio.loop = true;
+                tanpuraAudio.volume = 0.35;
+                tanpuraAudio.play().catch(function(){});
+                tanpuraPlaying = true;
+            } catch (e) {}
+        }
+
+        function stopTanpura() {
+            if (tanpuraAudio) { tanpuraAudio.pause(); tanpuraAudio = null; }
+            tanpuraPlaying = false;
+        }
+
+        tanpuraBtn.addEventListener('click', toggleTanpura);
+
+        window.addEventListener('resize', function() {
+            resizeCanvases();
+        });
+
+        window.addEventListener('beforeunload', function() {
+            stopMic();
+            stopTanpura();
+        });
+
+        recalcDisplayRange();
+        resizeCanvases();
+    </script>
+</body>
+</html>
