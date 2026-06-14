@@ -211,6 +211,33 @@
             color: var(--accent);
         }
 
+        .mode-btn {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .mode-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .mode-btn.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
         .notes-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -820,6 +847,13 @@
                     <div class="notes-grid" id="notesGrid"></div>
                 </div>
                 <div>
+                    <div class="panel-label">Mode</div>
+                    <div style="display:flex;gap:8px">
+                        <button class="mode-btn active" data-mode="sequential">Sequential</button>
+                        <button class="mode-btn" data-mode="parallel">Parallel</button>
+                    </div>
+                </div>
+                <div>
                     <div class="panel-label">Options</div>
                     <div class="difficulty-row">
                         <input type="range" id="diffSlider" min="2" max="12" value="4">
@@ -895,6 +929,9 @@
         let selectedThaat = 'Bilawal';
         let difficulty = 4;
         let sequenceLength = 1;
+        let guessMode = 'sequential';
+        let roundGeneration = 0;
+        let batchUpdate = false;
 
         let gameState = {
             currentSequence: [],
@@ -946,12 +983,15 @@
             startButton.addEventListener('click', startSession);
             settingsToggle.addEventListener('click', toggleSettings);
             diffSlider.addEventListener('input', onDiffChange);
+            diffSlider.addEventListener('change', restartRound);
             seqSlider.addEventListener('input', onSeqChange);
+            seqSlider.addEventListener('change', restartRound);
 
             buildThaatGrid();
             buildNotesGrid();
             selectThaat(selectedThaat);
             updateDifficulty();
+            initModeButtons();
 
             preloadAudio();
         }
@@ -984,6 +1024,7 @@
                 cb.addEventListener('change', () => {
                     label.classList.toggle('checked', cb.checked);
                     applyFilter();
+                    restartRound();
                 });
 
                 const ck = document.createElement('span');
@@ -1000,6 +1041,7 @@
         }
 
         function selectThaat(name) {
+            batchUpdate = true;
             selectedThaat = name;
             document.querySelectorAll('.thaat-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.thaat === name);
@@ -1015,6 +1057,22 @@
 
             applyFilter();
             updateTanpura();
+            batchUpdate = false;
+            restartRound();
+        }
+
+        function initModeButtons() {
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => selectMode(btn.dataset.mode));
+            });
+        }
+
+        function selectMode(mode) {
+            guessMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            restartRound();
         }
 
         function applyFilter() {
@@ -1067,6 +1125,13 @@
             nextRound();
         }
 
+        function restartRound() {
+            if (!gameState.sessionStarted || batchUpdate) return;
+            const buttons = optionsContainer.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true);
+            nextRound();
+        }
+
         function nextRound() {
             if (filteredNotes.length < 2) {
                 feedback.textContent = "Select at least 2 notes in settings";
@@ -1075,6 +1140,8 @@
             }
 
             questionSection.style.display = 'block';
+            roundGeneration++;
+            const gen = roundGeneration;
             feedback.className = 'feedback';
             feedback.textContent = '';
             gameState.answering = false;
@@ -1095,7 +1162,9 @@
 
             const tOff = tanpuraPlaying ? '' : ' tanpura-off';
             const label = document.getElementById('questionLabel');
-            if (sequenceLength > 1) {
+            if (guessMode === 'parallel') {
+                label.textContent = 'Match the sequence';
+            } else if (sequenceLength > 1) {
                 label.textContent = 'Note 1/' + sequenceLength;
             } else {
                 label.textContent = 'What note is this?';
@@ -1122,11 +1191,13 @@
             if (!replayBtn || seq.length === 0) return;
             if (replayBtn.classList.contains('playing')) return;
 
+            const gen = roundGeneration;
             replayBtn.classList.add('playing');
             const label = replayBtn.querySelector('.label');
             let index = 0;
 
             function playNext() {
+                if (gen !== roundGeneration) return;
                 if (index >= seq.length) {
                     replayBtn.classList.remove('playing');
                     label.textContent = 'replay';
@@ -1150,6 +1221,7 @@
         }
 
         function updateNoteProgress() {
+            if (guessMode === 'parallel') return;
             const label = document.getElementById('questionLabel');
             if (!label) return;
             const idx = gameState.sequenceIndex + 1;
@@ -1237,93 +1309,178 @@
         function generateOptions() {
             optionsContainer.innerHTML = '';
 
-            const correctAnswer = gameState.currentSequence[gameState.sequenceIndex].name;
+            if (guessMode === 'parallel') {
+                const correctSeq = gameState.currentSequence.map(n => n.name);
+                const correctStr = correctSeq.join(' ');
+                const notePool = filteredNotes.map(n => n.name);
+                const wantedWrong = Math.min(difficulty - 1, 20);
+                const wrongStrs = [];
+                const allStrs = [correctStr];
 
-            const pool = filteredNotes.filter(n => n.name !== correctAnswer);
-            const wantedWrong = difficulty - 1;
-            const wrongOptions = [];
+                for (let i = 0; i < wantedWrong * 3 && wrongStrs.length < wantedWrong; i++) {
+                    const str = generateRandomSeqStr(correctSeq.length, notePool);
+                    if (str !== correctStr && !wrongStrs.includes(str)) {
+                        wrongStrs.push(str);
+                        allStrs.push(str);
+                    }
+                }
 
-            const shuffled = [...pool];
-            shuffleArray(shuffled);
-            for (let i = 0; i < Math.min(wantedWrong, shuffled.length); i++) {
-                wrongOptions.push(shuffled[i].name);
+                shuffleArray(allStrs);
+
+                allStrs.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = 'option-btn';
+                    button.textContent = option;
+                    button.dataset.fullSeq = option;
+                    button.addEventListener('click', () => checkAnswer(option));
+                    optionsContainer.appendChild(button);
+                });
+            } else {
+                const correctAnswer = gameState.currentSequence[gameState.sequenceIndex].name;
+
+                const pool = filteredNotes.filter(n => n.name !== correctAnswer);
+                const wantedWrong = difficulty - 1;
+                const wrongOptions = [];
+
+                const shuffled = [...pool];
+                shuffleArray(shuffled);
+                for (let i = 0; i < Math.min(wantedWrong, shuffled.length); i++) {
+                    wrongOptions.push(shuffled[i].name);
+                }
+
+                const allOptions = [correctAnswer, ...wrongOptions];
+                shuffleArray(allOptions);
+
+                allOptions.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = 'option-btn';
+                    button.textContent = option;
+                    button.addEventListener('click', () => checkAnswer(option));
+                    optionsContainer.appendChild(button);
+                });
             }
+        }
 
-            const allOptions = [correctAnswer, ...wrongOptions];
-            shuffleArray(allOptions);
-
-            allOptions.forEach(option => {
-                const button = document.createElement('button');
-                button.className = 'option-btn';
-                button.textContent = option;
-                button.addEventListener('click', () => checkAnswer(option));
-                optionsContainer.appendChild(button);
-            });
+        function generateRandomSeqStr(len, pool) {
+            const seq = [];
+            for (let i = 0; i < len; i++) {
+                let pick;
+                do {
+                    pick = pool[Math.floor(Math.random() * pool.length)];
+                } while (i > 0 && pick === seq[i - 1] && pool.length > 1);
+                seq.push(pick);
+            }
+            return seq.join(' ');
         }
 
         function checkAnswer(selectedOption) {
             if (gameState.answering || gameState.roundComplete) return;
             gameState.answering = true;
+            const gen = roundGeneration;
 
             const buttons = optionsContainer.querySelectorAll('.option-btn');
-            const correctNote = gameState.currentSequence[gameState.sequenceIndex];
-            const correctName = correctNote.name;
 
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                if (btn.textContent === correctName) {
-                    btn.classList.add('correct');
-                } else if (btn.textContent === selectedOption && selectedOption !== correctName) {
-                    btn.classList.add('incorrect');
+            if (guessMode === 'parallel') {
+                const correctSeq = gameState.currentSequence.map(n => n.name);
+                const correctStr = correctSeq.join(' ');
+                const selectedNotes = selectedOption.split(' ');
+
+                buttons.forEach(btn => {
+                    btn.disabled = true;
+                    if (btn.dataset.fullSeq === correctStr) {
+                        btn.classList.add('correct');
+                    } else if (btn.dataset.fullSeq === selectedOption && selectedOption !== correctStr) {
+                        btn.classList.add('incorrect');
+                    }
+                });
+
+                for (let i = 0; i < correctSeq.length; i++) {
+                    const guessedNote = i < selectedNotes.length ? selectedNotes[i] : '';
+                    gameState.sequenceGuesses.push({
+                        note: correctSeq[i],
+                        guessed: guessedNote,
+                        correct: guessedNote === correctSeq[i]
+                    });
                 }
-            });
 
-            const isCorrect = selectedOption === correctName;
-            gameState.sequenceGuesses.push({
-                note: correctName,
-                guessed: selectedOption,
-                correct: isCorrect
-            });
-
-            if (isCorrect) {
-                feedback.textContent = "Correct!";
-                feedback.className = 'feedback correct';
-            } else {
-                feedback.textContent = "That was " + correctName;
-                feedback.className = 'feedback incorrect';
-            }
-
-            const nextIdx = gameState.sequenceIndex + 1;
-
-            if (nextIdx < gameState.currentSequence.length) {
-                setTimeout(() => {
-                    gameState.sequenceIndex = nextIdx;
-                    updateNoteProgress();
-                    feedback.className = 'feedback';
-                    feedback.textContent = '';
-                    generateOptions();
-                    gameState.answering = false;
-                }, 600);
-            } else if (gameState.currentSequence.length === 1) {
-                const score = '1/1';
-                gameState.roundComplete = true;
-                addToHistory(gameState.sequenceGuesses, score);
-                setTimeout(nextRound, 1200);
-            } else {
-                const total = gameState.currentSequence.length;
                 const correctCount = gameState.sequenceGuesses.filter(g => g.correct).length;
-                const score = correctCount + '/' + total;
+                const total = correctSeq.length;
+                const allCorrect = correctCount === total;
 
-                feedback.textContent = score + ' correct';
-                if (correctCount === total) {
+                if (allCorrect) {
+                    feedback.textContent = "Correct!";
                     feedback.className = 'feedback correct';
                 } else {
+                    feedback.textContent = "That was " + correctStr;
                     feedback.className = 'feedback incorrect';
                 }
 
+                const score = correctCount + '/' + total;
                 gameState.roundComplete = true;
                 addToHistory(gameState.sequenceGuesses, score);
-                setTimeout(nextRound, 2000);
+                setTimeout(() => { if (gen !== roundGeneration) return; nextRound(); }, 2000);
+
+            } else {
+                const correctNote = gameState.currentSequence[gameState.sequenceIndex];
+                const correctName = correctNote.name;
+
+                buttons.forEach(btn => {
+                    btn.disabled = true;
+                    if (btn.textContent === correctName) {
+                        btn.classList.add('correct');
+                    } else if (btn.textContent === selectedOption && selectedOption !== correctName) {
+                        btn.classList.add('incorrect');
+                    }
+                });
+
+                const isCorrect = selectedOption === correctName;
+                gameState.sequenceGuesses.push({
+                    note: correctName,
+                    guessed: selectedOption,
+                    correct: isCorrect
+                });
+
+                if (isCorrect) {
+                    feedback.textContent = "Correct!";
+                    feedback.className = 'feedback correct';
+                } else {
+                    feedback.textContent = "That was " + correctName;
+                    feedback.className = 'feedback incorrect';
+                }
+
+                const nextIdx = gameState.sequenceIndex + 1;
+
+                if (nextIdx < gameState.currentSequence.length) {
+                    setTimeout(() => {
+                        if (gen !== roundGeneration) return;
+                        gameState.sequenceIndex = nextIdx;
+                        updateNoteProgress();
+                        feedback.className = 'feedback';
+                        feedback.textContent = '';
+                        generateOptions();
+                        gameState.answering = false;
+                    }, 600);
+                } else if (gameState.currentSequence.length === 1) {
+                    const score = '1/1';
+                    gameState.roundComplete = true;
+                    addToHistory(gameState.sequenceGuesses, score);
+                    setTimeout(() => { if (gen !== roundGeneration) return; nextRound(); }, 1200);
+                } else {
+                    const total = gameState.currentSequence.length;
+                    const correctCount = gameState.sequenceGuesses.filter(g => g.correct).length;
+                    const score = correctCount + '/' + total;
+
+                    feedback.textContent = score + ' correct';
+                    if (correctCount === total) {
+                        feedback.className = 'feedback correct';
+                    } else {
+                        feedback.className = 'feedback incorrect';
+                    }
+
+                    gameState.roundComplete = true;
+                    addToHistory(gameState.sequenceGuesses, score);
+                    setTimeout(() => { if (gen !== roundGeneration) return; nextRound(); }, 2000);
+                }
             }
         }
 
