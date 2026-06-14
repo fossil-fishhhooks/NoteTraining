@@ -1439,7 +1439,7 @@
 
             if (guessMode === 'parallel') {
                 const correctSeq = gameState.currentSequence.map(n => n.name);
-                const correctStr = correctSeq.join(' ');
+                const correctStr = correctSeq.join('|');
                 const notePool = filteredNotes.map(n => n.name);
                 const wantedWrong = Math.min(difficulty - 1, 20);
                 const wrongStrs = [];
@@ -1458,7 +1458,7 @@
                 allStrs.forEach(option => {
                     const button = document.createElement('button');
                     button.className = 'option-btn';
-                    button.textContent = option;
+                    button.textContent = option.replace(/\|/g, ' \u00B7 ');
                     button.dataset.fullSeq = option;
                     button.addEventListener('click', () => checkAnswer(option));
                     optionsContainer.appendChild(button);
@@ -1498,7 +1498,7 @@
                 } while (i > 0 && pick === seq[i - 1] && pool.length > 1);
                 seq.push(pick);
             }
-            return seq.join(' ');
+            return seq.join('|');
         }
 
         function checkAnswer(selectedOption) {
@@ -1510,8 +1510,8 @@
 
             if (guessMode === 'parallel') {
                 const correctSeq = gameState.currentSequence.map(n => n.name);
-                const correctStr = correctSeq.join(' ');
-                const selectedNotes = selectedOption.split(' ');
+                const correctStr = correctSeq.join('|');
+                const selectedNotes = selectedOption.split('|');
 
                 buttons.forEach(btn => {
                     btn.disabled = true;
@@ -1539,7 +1539,7 @@
                     feedback.textContent = "Correct!";
                     feedback.className = 'feedback correct show';
                 } else {
-                    feedback.textContent = "That was " + correctStr;
+                    feedback.textContent = "That was " + correctStr.replace(/\|/g, ' \u00B7 ');
                     feedback.className = 'feedback incorrect show';
                 }
 

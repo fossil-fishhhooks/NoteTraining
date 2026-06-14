@@ -611,6 +611,13 @@
                         <span class="diff-value" id="sensValue">5</span>
                     </div>
                 </div>
+                <div>
+                    <div class="panel-label">Sa Note</div>
+                    <div class="difficulty-row">
+                        <input type="range" id="saNoteSlider" min="0" max="11" value="0" step="1">
+                        <span class="diff-value" id="saNoteValue">C</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -688,6 +695,8 @@
         const settingsPanel = document.getElementById('settingsPanel');
         const sensSlider = document.getElementById('sensSlider');
         const sensValue = document.getElementById('sensValue');
+        const saNoteSlider = document.getElementById('saNoteSlider');
+        const saNoteValue = document.getElementById('saNoteValue');
         const statusText = document.getElementById('statusText');
         const audioPlayer = document.getElementById('audioPlayer');
 
@@ -701,6 +710,17 @@
         let a4Ref = 440;
         let smoothedCents = 0;
         let micSensitivity = 5;
+        let saNoteIndex = 0;
+        const _saIndianMap = [];
+
+        function updateSaMapping() {
+            for (var i = 0; i < 12; i++) {
+                var shifted = ((i - saNoteIndex) + 12) % 12;
+                _saIndianMap[i] = INDIAN_MAP[WESTERN_NOTES[shifted]];
+            }
+        }
+        updateSaMapping();
+
         let tanpuraPlaying = false;
         let tanpuraAudio = null;
 
@@ -726,7 +746,7 @@
             var noteIndex = ((midi % 12) + 12) % 12;
             return {
                 western: WESTERN_NOTES[noteIndex],
-                indian: INDIAN_MAP[WESTERN_NOTES[noteIndex]],
+                indian: _saIndianMap[noteIndex],
                 octave: octave,
                 cents: cents,
                 freq: freq,
@@ -791,6 +811,22 @@
             }
 
             if (bestTau <= 0) return -1;
+
+            var candidates = [bestTau];
+            if (bestTau > minPeriod * 2) {
+                var ht = Math.round(bestTau / 2);
+                if (ht >= minPeriod) candidates.push(ht);
+            }
+            if (bestTau * 2 <= maxPeriod) {
+                candidates.push(Math.round(bestTau * 2));
+            }
+            candidates.sort(function(a,b){return a-b;});
+            bestTau = candidates[0];
+            for (var c = 1; c < candidates.length; c++) {
+                if (dNorm[candidates[c]] < dNorm[bestTau] * 0.92) {
+                    bestTau = candidates[c];
+                }
+            }
 
             if (bestTau > minPeriod && bestTau < maxPeriod) {
                 var x0 = bestTau - 1, y0 = dNorm[x0];
@@ -998,6 +1034,12 @@
             sensValue.textContent = micSensitivity;
         });
 
+        saNoteSlider.addEventListener('input', function() {
+            saNoteIndex = parseInt(saNoteSlider.value);
+            saNoteValue.textContent = WESTERN_NOTES[saNoteIndex];
+            updateSaMapping();
+        });
+
         saRefBtn.addEventListener('click', function() {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -1056,6 +1098,8 @@
             stopMic();
             stopTanpura();
         });
+
+        saNoteValue.textContent = WESTERN_NOTES[saNoteIndex];
     </script>
 </body>
 </html>
