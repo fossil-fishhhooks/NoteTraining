@@ -1110,6 +1110,8 @@
         let guessMode = 'sequential';
         let roundGeneration = 0;
         let batchUpdate = false;
+        let audioCtx = null;
+        let audioBuffers = {};
 
         let gameState = {
             currentSequence: [],
@@ -1175,6 +1177,7 @@
             initModeButtons();
 
             preloadAudio();
+            initAudioBuffers();
         }
 
         function buildThaatGrid() {
@@ -1278,6 +1281,49 @@
             gameState.audioLoaded = true;
         }
 
+        async function initAudioBuffers() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                for (const n of notes) {
+                    try {
+                        const resp = await fetch(n.audioFile);
+                        const buf = await resp.arrayBuffer();
+                        audioBuffers[n.audioFile] = await audioCtx.decodeAudioData(buf);
+                    } catch(e) {}
+                }
+            } catch(e) {}
+        }
+
+        function getNotePlayDuration() {
+            return 1200 - (playbackSpeed - 1) * 100;
+        }
+
+        function playNoteBuffer(audioFile, durationMs) {
+            if (!audioCtx || audioCtx.state === 'closed') return;
+            if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+            const buffer = audioBuffers[audioFile];
+            if (!buffer) {
+                const audio = new Audio(audioFile);
+                audio.play().catch(() => {});
+                return;
+            }
+            const source = audioCtx.createBufferSource();
+            const gain = audioCtx.createGain();
+            source.buffer = buffer;
+            source.connect(gain);
+            gain.connect(audioCtx.destination);
+            const playDur = Math.min(durationMs / 1000, buffer.duration);
+            const fadeDur = Math.min(0.15, playDur * 0.4);
+            const fadeStart = playDur - fadeDur;
+            const now = audioCtx.currentTime;
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(1, now + 0.005);
+            gain.gain.setValueAtTime(1, now + fadeStart);
+            gain.gain.linearRampToValueAtTime(0, now + playDur);
+            source.start(now, 0, playDur);
+            source.stop(now + playDur);
+        }
+
         function startSession() {
             gameState.sessionStarted = true;
             startButton.style.display = 'none';
@@ -1354,27 +1400,25 @@
             const gen = roundGeneration;
             replayBtn.classList.add('playing');
             const label = replayBtn.querySelector('.label');
-            const gap = Math.max(500, 1200 - (playbackSpeed - 1) * 100);
+            const noteDur = getNotePlayDuration();
 
             seq.forEach((note, i) => {
                 const playIt = () => {
                     if (gen !== roundGeneration) return;
                     label.textContent = 'playing note ' + (i + 1) + '/' + seq.length;
-                    const audio = new Audio(note.audioFile);
-                    audio.volume = 1;
-                    audio.play().catch(() => {});
+                    playNoteBuffer(note.audioFile, noteDur);
                     if (i === seq.length - 1) {
-                        audio.addEventListener('ended', () => {
+                        setTimeout(() => {
                             if (gen !== roundGeneration) return;
                             replayBtn.classList.remove('playing');
                             label.textContent = 'replay';
-                        });
+                        }, noteDur);
                     }
                 };
                 if (i === 0) {
                     playIt();
                 } else {
-                    setTimeout(playIt, i * gap);
+                    setTimeout(playIt, i * noteDur);
                 }
             });
         }
