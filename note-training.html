@@ -1079,7 +1079,11 @@
             { name: "Dha Komal", audioFile: "dha_komal.mp3" },
             { name: "Dha",       audioFile: "dha.mp3" },
             { name: "Ni Komal",  audioFile: "ni_komal.mp3" },
-            { name: "Ni",        audioFile: "ni.mp3" }
+            { name: "Ni",        audioFile: "ni.mp3" },
+            { name: "Dha (lower)",  audioFile: "dha_lower.mp3", extra: true },
+            { name: "Ni (lower)",   audioFile: "ni_lower.mp3", extra: true },
+            { name: "Sa (higher)",  audioFile: "sa_higher.mp3", extra: true },
+            { name: "Re (higher)",  audioFile: "re_higher.mp3", extra: true }
         ];
 
         const THAATS = {
@@ -1199,7 +1203,7 @@
 
                 const cb = document.createElement('input');
                 cb.type = 'checkbox';
-                cb.checked = true;
+                cb.checked = !n.extra;
                 cb.addEventListener('change', () => {
                     label.classList.toggle('checked', cb.checked);
                     applyFilter();
