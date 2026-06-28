@@ -376,6 +376,19 @@
                 </div>
             </div>
         </div>
+
+        <div class="settings-section">
+            <div class="section-title">Patterns</div>
+            <div class="settings-inner">
+                <div>
+                    <div class="panel-label">Speed</div>
+                    <div class="settings-row">
+                        <input type="range" id="patSpeedSlider" min="1" max="10" value="5">
+                        <span class="val" id="patSpeedValue">5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -496,6 +509,17 @@
             var v = ntSpeedSlider.value;
             ntSpeedValue.textContent = v;
             persist('ntSpeed', v);
+        });
+
+        var patSpeedSlider = document.getElementById('patSpeedSlider');
+        var patSpeedValue = document.getElementById('patSpeedValue');
+
+        patSpeedSlider.value = loadSetting('patSpeed', 5);
+        patSpeedValue.textContent = patSpeedSlider.value;
+        patSpeedSlider.addEventListener('input', function() {
+            var v = patSpeedSlider.value;
+            patSpeedValue.textContent = v;
+            persist('patSpeed', v);
         });
     </script>
 </body>
