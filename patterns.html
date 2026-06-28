@@ -575,42 +575,6 @@
             display: none !important;
         }
 
-        @media (max-width: 600px) {
-            body {
-                padding: 12px 8px;
-            }
-
-            .container {
-                padding: 20px 16px;
-                border-radius: 20px;
-            }
-
-            .header-row h1 {
-                font-size: 1.7rem;
-            }
-
-            .note-display {
-                min-height: 80px;
-            }
-
-            .options-container {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            .option-btn {
-                padding: 16px;
-                font-size: 1.1rem;
-                min-height: 56px;
-            }
-
-            .start-btn {
-                width: 100%;
-                max-width: 100%;
-                padding: 14px 32px;
-                font-size: 1.05rem;
-            }
-
         .setup-section {
             margin-bottom: 24px;
         }
@@ -635,38 +599,49 @@
             margin-top: 16px;
         }
 
-        .pattern-select {
+        .select-wrap {
+            position: relative;
+        }
+
+        .select-wrap select {
             width: 100%;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
+            background: #12121e;
+            border: 1px solid rgba(255,255,255,0.12);
             border-radius: var(--radius-sm);
             color: var(--text-primary);
             font-family: inherit;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 500;
-            padding: 10px 12px;
+            padding: 10px 36px 10px 14px;
             outline: none;
             cursor: pointer;
             transition: border-color 0.2s ease;
             -webkit-appearance: none;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 36px;
         }
 
-        .pattern-select:hover {
-            border-color: var(--border-hover);
+        .select-wrap select:hover {
+            border-color: rgba(255,255,255,0.2);
         }
 
-        .pattern-select:focus {
+        .select-wrap select:focus {
             border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(168,85,247,0.2);
         }
 
-        .pattern-select option {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
+        .select-wrap::after {
+            content: "\25BC";
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .select-wrap:focus-within::after {
+            color: var(--accent);
         }
 
         .upload-row {
@@ -676,8 +651,8 @@
         }
 
         .upload-btn {
-            background: var(--surface);
-            border: 1px dashed var(--border);
+            background: #12121e;
+            border: 1px dashed rgba(255,255,255,0.15);
             border-radius: var(--radius-sm);
             padding: 10px 16px;
             font-family: inherit;
@@ -691,7 +666,7 @@
         }
 
         .upload-btn:hover {
-            background: var(--surface-hover);
+            background: rgba(255,255,255,0.06);
             border-color: var(--accent);
             color: var(--accent);
         }
@@ -700,36 +675,33 @@
             border-style: solid;
             border-color: var(--success);
             color: var(--success);
-            background: var(--success-bg);
+            background: rgba(16,185,129,0.1);
         }
 
-        .info-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 1px solid var(--border);
-            background: var(--surface);
+        .format-link {
+            background: #12121e;
+            border: 1px solid rgba(255,255,255,0.1);
             color: var(--text-muted);
             font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: 700;
+            font-size: 0.78rem;
+            font-weight: 500;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
             transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
-        .info-btn:hover {
-            background: var(--surface-hover);
+        .format-link:hover {
+            background: var(--accent-dim);
             border-color: var(--accent);
             color: var(--accent);
         }
 
         .format-info {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
+            background: #12121e;
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: var(--radius-sm);
             padding: 14px 16px;
             font-size: 0.82rem;
@@ -773,7 +745,43 @@
             min-height: 1.2em;
         }
 
-        .intro-section {
+        @media (max-width: 600px) {
+            body {
+                padding: 12px 8px;
+            }
+
+            .container {
+                padding: 20px 16px;
+                border-radius: 20px;
+            }
+
+            .header-row h1 {
+                font-size: 1.7rem;
+            }
+
+            .note-display {
+                min-height: 80px;
+            }
+
+            .options-container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .option-btn {
+                padding: 16px;
+                font-size: 1.1rem;
+                min-height: 56px;
+            }
+
+            .start-btn {
+                width: 100%;
+                max-width: 100%;
+                padding: 14px 32px;
+                font-size: 1.05rem;
+            }
+
+            .intro-section {
                 padding: 20px 16px;
             }
 
@@ -876,14 +884,14 @@
             <div class="setup-inner">
                 <div>
                     <div class="panel-label">Pattern Set</div>
-                    <select class="pattern-select" id="patternSelect"></select>
+                    <div class="select-wrap"><select id="patternSelect"></select></div>
                     <div class="set-count" id="setCount"></div>
                 </div>
                 <div>
                     <div class="panel-label">Custom</div>
                     <div class="upload-row">
                         <button class="upload-btn" id="uploadBtn">Add Your Own &hellip;</button>
-                        <button class="info-btn" id="formatInfoBtn" title="Pattern file format">?</button>
+                        <button class="format-link" id="formatInfoBtn">Format guide</button>
                         <input type="file" id="fileInput" accept=".txt" style="display:none">
                     </div>
                     <div class="format-info" id="formatInfo" style="display:none">
@@ -952,7 +960,38 @@ Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa</pre>
             "Sa|Ga|Re|Sa","Re|Ma|Ga|Re","Ga|Pa|Ma|Ga","Ma|Dha|Pa|Ma","Pa|Ni|Dha|Pa","Dha|Sa|Ni|Dha",
             "Sa|Ga|Ma|Dha|Ni|Sa","Sa|Re|Ga|Ma|Dha|Ni",
             "Ma|Ga|Re|Sa|Re|Ga","Dha|Ni|Sa|Re|Ga|Ma",
-            "Sa|Ma|Ga|Re|Sa","Re|Pa|Ma|Ga|Re","Ga|Dha|Pa|Ma|Ga","Ma|Ni|Dha|Pa|Ma","Pa|Sa|Ni|Dha|Pa"
+            "Sa|Ma|Ga|Re|Sa","Re|Pa|Ma|Ga|Re","Ga|Dha|Pa|Ma|Ga","Ma|Ni|Dha|Pa|Ma","Pa|Sa|Ni|Dha|Pa",
+            // Janta (paired notes)
+            "Sa|Sa|Re|Re|Ga|Ga|Ma|Ma",
+            "Re|Re|Ga|Ga|Ma|Ma|Pa|Pa",
+            "Ga|Ga|Ma|Ma|Pa|Pa|Dha|Dha",
+            "Ma|Ma|Pa|Pa|Dha|Dha|Ni|Ni",
+            "Pa|Pa|Dha|Dha|Ni|Ni|Sa|Sa",
+            "Sa|Sa|Ni|Ni|Dha|Dha|Pa|Pa",
+            "Dha|Dha|Pa|Pa|Ma|Ma|Ga|Ga",
+            "Pa|Pa|Ma|Ma|Ga|Ga|Re|Re",
+            "Ma|Ma|Ga|Ga|Re|Re|Sa|Sa",
+            // Dhatu (zigzag)
+            "Sa|Ga|Re|Sa|Re|Ma|Ga|Re",
+            "Re|Ma|Ga|Re|Ga|Pa|Ma|Ga",
+            "Ga|Pa|Ma|Ga|Ma|Dha|Pa|Ma",
+            "Ma|Dha|Pa|Ma|Pa|Ni|Dha|Pa",
+            "Sa|Re|Ga|Ma|Re|Ga|Ma|Pa",
+            "Re|Ga|Ma|Pa|Ga|Ma|Pa|Dha",
+            "Ga|Ma|Pa|Dha|Ma|Pa|Dha|Ni",
+            "Ma|Pa|Dha|Ni|Pa|Dha|Ni|Sa",
+            // Alankara-style (extended arcs and turns)
+            "Sa|Re|Ga|Ma|Pa|Dha|Ni|Sa|Re|Ga",
+            "Sa|Re|Ga|Ma|Pa|Dha|Ni|Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa",
+            "Sa|Re|Ga|Ma|Ga|Re|Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa",
+            "Ga|Ma|Pa|Ma|Ga|Ma|Pa|Dha|Pa|Ma|Ga",
+            // Carnatic vakra and wide-jump patterns
+            "Sa|Ga|Ma|Pa|Dha|Ni|Sa|Re",
+            "Sa|Re|Ma|Pa|Dha|Ni|Sa",
+            "Sa|Ga|Ma|Dha|Ni|Sa",
+            "Sa|Re|Ga|Ma|Dha|Ni|Sa",
+            "Sa|Ma|Pa|Ni|Dha|Sa",
+            "Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa|Ni|Dha"
         ];
 
         function filterNatural(patterns) {
@@ -964,13 +1003,61 @@ Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa</pre>
             return _ALL_PATTERNS.filter(p => { const n = p.split('|').length; return n >= min && n <= max; });
         }
 
+        function isJanta(p) {
+            const n = p.split('|');
+            if (n.length < 4) return false;
+            for (let i = 0; i < n.length; i += 2) {
+                if (i + 1 >= n.length || n[i] !== n[i+1]) return false;
+            }
+            return true;
+        }
+
         const PATTERN_SETS = {
             "All": _ALL_PATTERNS,
             "Ascending": _ALL_PATTERNS.filter(p => { const n = p.split('|'); for (let i = 1; i < n.length; i++) { const a = NOTE_POOL.indexOf(n[i-1]), b = NOTE_POOL.indexOf(n[i]); if (b < 0 || a < 0 || b <= a) return false; } return true; }),
             "Descending": _ALL_PATTERNS.filter(p => { const n = p.split('|'); for (let i = 1; i < n.length; i++) { const a = NOTE_POOL.indexOf(n[i-1]), b = NOTE_POOL.indexOf(n[i]); if (b < 0 || a < 0 || b >= a) return false; } return true; }),
+            "Janta": _ALL_PATTERNS.filter(isJanta),
+            "Dhatu": [
+                "Sa|Ga|Re|Sa|Re|Ma|Ga|Re",
+                "Re|Ma|Ga|Re|Ga|Pa|Ma|Ga",
+                "Ga|Pa|Ma|Ga|Ma|Dha|Pa|Ma",
+                "Ma|Dha|Pa|Ma|Pa|Ni|Dha|Pa",
+                "Sa|Re|Ga|Ma|Re|Ga|Ma|Pa",
+                "Re|Ga|Ma|Pa|Ga|Ma|Pa|Dha",
+                "Ga|Ma|Pa|Dha|Ma|Pa|Dha|Ni",
+                "Ma|Pa|Dha|Ni|Pa|Dha|Ni|Sa"
+            ],
             "Alankars": _ALL_PATTERNS.filter(p => { const n = p.split('|'); for (let i = 2; i < n.length; i++) { if (n[i-2] === n[i]) return true; } return false; }),
             "Short": filterLen(3, 4),
-            "Long": filterLen(5, 8)
+            "Long": filterLen(5, 8),
+            "Carnatic": [
+                // Janta selection
+                "Sa|Sa|Re|Re|Ga|Ga|Ma|Ma",
+                "Pa|Pa|Dha|Dha|Ni|Ni|Sa|Sa",
+                "Sa|Sa|Ni|Ni|Dha|Dha|Pa|Pa",
+                "Ma|Ma|Ga|Ga|Re|Re|Sa|Sa",
+                // Dhatu selection
+                "Sa|Ga|Re|Sa|Re|Ma|Ga|Re",
+                "Ga|Pa|Ma|Ga|Ma|Dha|Pa|Ma",
+                "Sa|Re|Ga|Ma|Re|Ga|Ma|Pa",
+                "Ga|Ma|Pa|Dha|Ma|Pa|Dha|Ni",
+                // Alankara-style
+                "Sa|Re|Ga|Ma|Pa|Dha|Ni|Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa",
+                "Sa|Re|Ga|Ma|Ga|Re|Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa",
+                // Vakra / wide-jump
+                "Sa|Ga|Ma|Pa|Dha|Ni|Sa|Re",
+                "Sa|Ga|Ma|Dha|Ni|Sa",
+                "Sa|Re|Ma|Pa|Dha|Ni|Sa",
+                "Sa|Ma|Pa|Ni|Dha|Sa",
+                // Sarali-style with turns
+                "Sa|Re|Ga|Ma|Pa|Dha|Ni|Sa|Re|Ga",
+                "Sa|Re|Ga|Ma|Pa|Dha|Ni|Sa",
+                "Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa",
+                "Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa|Ni|Dha",
+                // Extended arcs
+                "Ga|Ma|Pa|Ma|Ga|Ma|Pa|Dha|Pa|Ma|Ga",
+                "Sa|Re|Ga|Ma|Ga|Re|Sa|Re|Ga|Ma|Pa|Ma|Ga|Re|Sa"
+            ]
         };
 
         let allPatterns = PATTERN_SETS["All"];
@@ -1014,7 +1101,7 @@ Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa</pre>
         var _spd = localStorage.getItem('patSpeed');
         if (_spd !== null) { playbackSpeed = parseInt(_spd); }
 
-        function populateDropdown() {
+        function populateSelect() {
             patternSelect.innerHTML = '';
             Object.keys(PATTERN_SETS).forEach(name => {
                 const opt = document.createElement('option');
@@ -1045,7 +1132,7 @@ Sa|Ni|Dha|Pa|Ma|Ga|Re|Sa</pre>
         }
 
         function init() {
-            populateDropdown();
+            populateSelect();
             patternSelect.addEventListener('change', function() {
                 selectPatternSet(this.value);
             });
